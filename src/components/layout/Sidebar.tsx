@@ -22,11 +22,8 @@ const menuItems = [
 
 const settingsItems = [
   { label: "Profile", path: "/settings/profile" },
-  { label: "Notifications", path: "/settings/notifications" },
-  { label: "Categories", path: "/settings/categories" },
-  { label: "Spending Groups", path: "/settings/spending-groups" },
-  { label: "Integrations", path: "/settings/integrations" },
-  { label: "Billing", path: "/settings/billing" },
+  { label: "Appearance", path: "/settings/appearance" },
+  { label: "Categories & Groups", path: "/settings/categories" },
 ];
 
 const Sidebar = () => {
