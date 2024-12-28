@@ -14,9 +14,9 @@ const Settings = () => {
         }
       />
       <Route
-        path="categories"
+        path="budget"
         element={
-          <h1 className="text-3xl font-bold text-gray-900">Categories & Groups</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Budget Settings</h1>
         }
       />
     </Routes>

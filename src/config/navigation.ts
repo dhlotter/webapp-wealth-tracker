@@ -17,5 +17,5 @@ export const menuItems = [
 export const settingsItems = [
   { label: "Profile", path: "/settings/profile" },
   { label: "Appearance", path: "/settings/appearance" },
-  { label: "Categories & Groups", path: "/settings/categories" },
+  { label: "Budget", path: "/settings/budget" },
 ];
