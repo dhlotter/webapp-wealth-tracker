@@ -15,6 +15,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 type Transaction = {
   id: string;
@@ -68,6 +78,9 @@ const Transactions = () => {
     direction: "asc",
   });
   const [filter, setFilter] = useState<FilterType>("all");
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [editForm, setEditForm] = useState<Partial<Transaction>>({});
 
   const handleSort = (key: keyof Transaction) => {
     setSortConfig((current) => ({
@@ -99,6 +112,29 @@ const Transactions = () => {
         return true;
     }
   });
+
+  const handleRowClick = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setEditForm(transaction);
+    setIsDrawerOpen(true);
+  };
+
+  const handleSave = () => {
+    if (!selectedTransaction || !editForm) return;
+
+    const updatedTransaction = {
+      ...selectedTransaction,
+      ...editForm,
+      originalDate: selectedTransaction.originalDate || selectedTransaction.date,
+    };
+
+    setTransactions(transactions.map(t => 
+      t.id === selectedTransaction.id ? updatedTransaction : t
+    ));
+
+    setIsDrawerOpen(false);
+    toast.success("Transaction updated successfully");
+  };
 
   return (
     <div className="space-y-6">
@@ -168,6 +204,7 @@ const Transactions = () => {
             <TableRow
               key={transaction.id}
               className="cursor-pointer hover:bg-muted/50"
+              onClick={() => handleRowClick(transaction)}
             >
               <TableCell>{new Date(transaction.date).toLocaleDateString()}</TableCell>
               <TableCell>{transaction.merchant}</TableCell>
@@ -182,6 +219,92 @@ const Transactions = () => {
           ))}
         </TableBody>
       </Table>
+
+      <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+        <DrawerContent>
+          <div className="mx-auto w-full max-w-4xl">
+            <DrawerHeader>
+              <DrawerTitle className="text-2xl font-bold">
+                Edit Transaction
+              </DrawerTitle>
+              <DrawerDescription>
+                Make changes to your transaction here
+              </DrawerDescription>
+            </DrawerHeader>
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="date">Date</Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={editForm.date || ""}
+                    onChange={(e) => setEditForm({ ...editForm, date: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="merchant">Merchant</Label>
+                  <Input
+                    id="merchant"
+                    value={editForm.merchant || ""}
+                    onChange={(e) => setEditForm({ ...editForm, merchant: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Input
+                    id="description"
+                    value={editForm.description || ""}
+                    onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Input
+                    id="category"
+                    value={editForm.category || ""}
+                    onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="amount">Amount</Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    value={editForm.amount || ""}
+                    onChange={(e) => setEditForm({ ...editForm, amount: parseFloat(e.target.value) })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="account">Account</Label>
+                  <Input
+                    id="account"
+                    value={editForm.account || ""}
+                    onChange={(e) => setEditForm({ ...editForm, account: e.target.value })}
+                  />
+                </div>
+                <div className="col-span-2 space-y-2">
+                  <Label htmlFor="note">Note</Label>
+                  <Input
+                    id="note"
+                    value={editForm.note || ""}
+                    onChange={(e) => setEditForm({ ...editForm, note: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-4">
+                <Button variant="outline" onClick={() => setIsDrawerOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSave}>
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 };
