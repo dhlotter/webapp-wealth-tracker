@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -27,11 +26,23 @@ const profileFormSchema = z.object({
     .string()
     .min(1, { message: "This field cannot be empty." })
     .email("This is not a valid email."),
-  currentPassword: z.string().min(8, { message: "Password must be at least 8 characters." }),
-  newPassword: z.string().min(8, { message: "Password must be at least 8 characters." }),
-  confirmPassword: z.string().min(8, { message: "Password must be at least 8 characters." }),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "Passwords don't match",
+  currentPassword: z.string().optional(),
+  newPassword: z.string().optional(),
+  confirmPassword: z.string().optional(),
+}).refine((data) => {
+  // Only validate passwords if any password field is filled
+  if (data.currentPassword || data.newPassword || data.confirmPassword) {
+    if (!data.currentPassword || !data.newPassword || !data.confirmPassword) {
+      return false;
+    }
+    if (data.newPassword.length < 8) {
+      return false;
+    }
+    return data.newPassword === data.confirmPassword;
+  }
+  return true;
+}, {
+  message: "Please fill all password fields and ensure passwords match",
   path: ["confirmPassword"],
 });
 
@@ -50,14 +61,26 @@ export default function Profile() {
   });
 
   function onSubmit(data: ProfileFormValues) {
+    // Create an update object with only the fields that should be updated
+    const updateData: Partial<ProfileFormValues> = {
+      name: data.name,
+      email: data.email,
+    };
+
+    // Only include password update if all password fields are filled
+    if (data.currentPassword && data.newPassword && data.confirmPassword) {
+      updateData.currentPassword = data.currentPassword;
+      updateData.newPassword = data.newPassword;
+    }
+
     toast.success("Profile updated successfully!");
-    console.log(data);
+    console.log("Update data:", updateData);
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium">Profile</h3>
+        <h3 className="text-2xl font-semibold text-[#F97316]">Profile</h3>
         <p className="text-sm text-muted-foreground">
           Manage your profile information and password.
         </p>
