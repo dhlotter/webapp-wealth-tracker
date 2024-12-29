@@ -13,10 +13,11 @@ export const SidebarSettings = () => {
       <button
         onClick={() => setIsSettingsOpen(!isSettingsOpen)}
         className={cn(
-          "w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors",
+          "w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200",
           location.pathname.startsWith("/settings")
-            ? "bg-primary text-white"
-            : "text-gray-700 hover:bg-gray-100"
+            ? "text-[#F97316]"
+            : "text-gray-300 hover:text-[#F97316]",
+          "hover:text-shadow-[0_0_10px_rgba(249,115,22,0.5)]"
         )}
       >
         <div className="flex items-center space-x-3">
@@ -38,10 +39,11 @@ export const SidebarSettings = () => {
               <Link
                 to={item.path}
                 className={cn(
-                  "block px-3 py-2 rounded-lg transition-colors",
+                  "block px-3 py-2 rounded-lg transition-all duration-200",
                   location.pathname === item.path
-                    ? "bg-primary text-white"
-                    : "text-gray-700 hover:bg-gray-100"
+                    ? "text-[#F97316]"
+                    : "text-gray-300 hover:text-[#F97316]",
+                  "hover:text-shadow-[0_0_10px_rgba(249,115,22,0.5)]"
                 )}
               >
                 {item.label}
