@@ -52,7 +52,7 @@ const defaultValues: Partial<ProfileFormValues> = {
   email: "john@example.com",
 };
 
-export default function Profile() {
+export default function SettingsProfile() {
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues,
@@ -152,7 +152,7 @@ export default function Profile() {
               )}
             />
           </div>
-          <Button type="submit">Update profile</Button>
+          <Button type="submit">Save</Button>
         </form>
       </Form>
     </div>

@@ -8,16 +8,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { PlusCircle } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { PlusCircle, ArrowUpDown } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   LineChart,
   Line,
@@ -27,7 +35,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { toast } from "sonner";
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 type Account = {
   id: string;
@@ -38,11 +46,25 @@ type Account = {
   history: { date: string; balance: number }[];
 };
 
+type SortConfig = {
+  key: keyof Account | null;
+  direction: "asc" | "desc";
+};
+
+const accountTypes = [
+  "Bank Account",
+  "Investment Account",
+  "Property",
+  "Vehicle",
+  "Bond",
+  "Other Asset"
+];
+
 const mockAccounts: Account[] = [
   {
     id: "1",
     name: "Main Checking",
-    type: "Checking",
+    type: "Bank Account",
     balance: 5000,
     lastUpdated: "2024-03-20",
     history: [
@@ -53,32 +75,42 @@ const mockAccounts: Account[] = [
   },
   {
     id: "2",
-    name: "Savings",
-    type: "Savings",
-    balance: 10000,
+    name: "Investment Portfolio",
+    type: "Investment Account",
+    balance: 150000,
     lastUpdated: "2024-03-19",
     history: [
-      { date: "2024-01", balance: 9000 },
-      { date: "2024-02", balance: 9500 },
-      { date: "2024-03", balance: 10000 },
+      { date: "2024-01", balance: 145000 },
+      { date: "2024-02", balance: 148000 },
+      { date: "2024-03", balance: 150000 },
+    ],
+  },
+  {
+    id: "3",
+    name: "Home Property",
+    type: "Property",
+    balance: 500000,
+    lastUpdated: "2024-03-15",
+    history: [
+      { date: "2024-01", balance: 495000 },
+      { date: "2024-02", balance: 498000 },
+      { date: "2024-03", balance: 500000 },
     ],
   },
 ];
 
-type SortConfig = {
-  key: keyof Account | null;
-  direction: "asc" | "desc";
-};
-
 const Accounts = () => {
-  const navigate = useNavigate();
   const [accounts, setAccounts] = useState<Account[]>(mockAccounts);
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     key: null,
     direction: "asc",
   });
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
+  const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
+  const [newAccount, setNewAccount] = useState<Partial<Account>>({
+    type: accountTypes[0],
+  });
 
   const handleSort = (key: keyof Account) => {
     setSortConfig((current) => ({
@@ -97,27 +129,110 @@ const Accounts = () => {
     setAccounts(sortedAccounts);
   };
 
-  const handleRowClick = (account: Account) => {
-    setSelectedAccount(account);
-    setIsDrawerOpen(true);
+  const handleAddAccount = () => {
+    if (newAccount.name && newAccount.type && newAccount.balance) {
+      const account: Account = {
+        id: Date.now().toString(),
+        name: newAccount.name,
+        type: newAccount.type,
+        balance: Number(newAccount.balance),
+        lastUpdated: new Date().toISOString().split('T')[0],
+        history: [
+          { date: new Date().toISOString().split('T')[0], balance: Number(newAccount.balance) }
+        ],
+      };
+      setAccounts([...accounts, account]);
+      setNewAccount({ type: accountTypes[0] });
+      setIsAddSheetOpen(false);
+    }
   };
 
-  const handleDelete = () => {
-    if (selectedAccount && window.confirm("Are you sure you want to delete this account?")) {
-      setAccounts(accounts.filter(a => a.id !== selectedAccount.id));
-      setIsDrawerOpen(false);
-      toast.success("Account deleted successfully");
+  const handleEditAccount = () => {
+    if (selectedAccount) {
+      const updatedAccounts = accounts.map((account) =>
+        account.id === selectedAccount.id ? selectedAccount : account
+      );
+      setAccounts(updatedAccounts);
+      setIsEditSheetOpen(false);
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900">Accounts</h1>
-        <Button onClick={() => navigate("/accounts/new")}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add Account
-        </Button>
+        <h1 className="text-3xl font-bold">Accounts</h1>
+        <Sheet open={isAddSheetOpen} onOpenChange={setIsAddSheetOpen}>
+          <SheetTrigger asChild>
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add Account
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-[400px] !p-0 flex flex-col">
+            <ScrollArea className="flex-1">
+              <div className="p-[2mm]">
+                <SheetHeader>
+                  <SheetTitle>Add New Account</SheetTitle>
+                  <SheetDescription>
+                    Enter the details for your new account
+                  </SheetDescription>
+                </SheetHeader>
+                <div className="space-y-4 mt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Account Name</Label>
+                    <Input
+                      id="name"
+                      value={newAccount.name || ""}
+                      onChange={(e) =>
+                        setNewAccount({ ...newAccount, name: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="type">Account Type</Label>
+                    <Select
+                      value={newAccount.type}
+                      onValueChange={(value) =>
+                        setNewAccount({ ...newAccount, type: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select account type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {accountTypes.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="balance">Current Balance</Label>
+                    <Input
+                      id="balance"
+                      type="number"
+                      value={newAccount.balance || ""}
+                      onChange={(e) =>
+                        setNewAccount({
+                          ...newAccount,
+                          balance: parseFloat(e.target.value),
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            </ScrollArea>
+            <div className="mt-auto border-t">
+              <div className="p-[2mm] flex justify-center gap-2">
+                <Button variant="outline" onClick={() => setIsAddSheetOpen(false)} className="flex-1">Cancel</Button>
+                <Button onClick={handleAddAccount} className="flex-1">Add Account</Button>
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
 
       <Table>
@@ -127,25 +242,37 @@ const Accounts = () => {
               className="cursor-pointer"
               onClick={() => handleSort("name")}
             >
-              Account Name
+              <div className="flex items-center">
+                Account Name
+                <ArrowUpDown className="ml-2 h-4 w-4" />
+              </div>
             </TableHead>
             <TableHead
               className="cursor-pointer"
               onClick={() => handleSort("type")}
             >
-              Type
+              <div className="flex items-center">
+                Type
+                <ArrowUpDown className="ml-2 h-4 w-4" />
+              </div>
             </TableHead>
             <TableHead
               className="cursor-pointer text-right"
               onClick={() => handleSort("balance")}
             >
-              Balance
+              <div className="flex items-center justify-end">
+                Balance
+                <ArrowUpDown className="ml-2 h-4 w-4" />
+              </div>
             </TableHead>
             <TableHead
               className="cursor-pointer"
               onClick={() => handleSort("lastUpdated")}
             >
-              Last Updated
+              <div className="flex items-center">
+                Last Updated
+                <ArrowUpDown className="ml-2 h-4 w-4" />
+              </div>
             </TableHead>
           </TableRow>
         </TableHeader>
@@ -154,84 +281,119 @@ const Accounts = () => {
             <TableRow
               key={account.id}
               className="cursor-pointer hover:bg-muted/50"
-              onClick={() => handleRowClick(account)}
+              onClick={() => {
+                setSelectedAccount(account);
+                setIsEditSheetOpen(true);
+              }}
             >
               <TableCell>{account.name}</TableCell>
               <TableCell>{account.type}</TableCell>
               <TableCell className="text-right">
                 ${account.balance.toLocaleString()}
               </TableCell>
-              <TableCell>{new Date(account.lastUpdated).toLocaleDateString()}</TableCell>
+              <TableCell>
+                {new Date(account.lastUpdated).toLocaleDateString()}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
 
-      <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-        <DrawerContent>
-          <div className="mx-auto w-full max-w-4xl">
-            <DrawerHeader>
-              <DrawerTitle className="text-2xl font-bold">
-                {selectedAccount?.name}
-              </DrawerTitle>
-              <DrawerDescription>
-                Account Details
-              </DrawerDescription>
-            </DrawerHeader>
-            {selectedAccount && (
-              <div className="p-6 space-y-6">
-                <div className="grid grid-cols-3 gap-6">
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-gray-500">Type</h3>
-                    <p className="text-lg font-semibold">{selectedAccount.type}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-gray-500">Balance</h3>
-                    <p className="text-lg font-semibold">
-                      ${selectedAccount.balance.toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-gray-500">Last Updated</h3>
-                    <p className="text-lg font-semibold">
-                      {new Date(selectedAccount.lastUpdated).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={selectedAccount.history}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis />
-                      <Tooltip />
-                      <Line
-                        type="monotone"
-                        dataKey="balance"
-                        stroke="#1E40AF"
-                        strokeWidth={2}
+      <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
+        <SheetContent side="right" className="w-[400px] !p-0 flex flex-col">
+          <ScrollArea className="flex-1">
+            <div className="p-[2mm]">
+              <SheetHeader>
+                <SheetTitle>Edit Account</SheetTitle>
+                <SheetDescription>
+                  Make changes to your account
+                </SheetDescription>
+              </SheetHeader>
+              {selectedAccount && (
+                <>
+                  <div className="space-y-6 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-name">Account Name</Label>
+                      <Input
+                        id="edit-name"
+                        value={selectedAccount.name}
+                        onChange={(e) =>
+                          setSelectedAccount({
+                            ...selectedAccount,
+                            name: e.target.value,
+                          })
+                        }
                       />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-
-                <div className="flex justify-end space-x-4">
-                  <Button variant="outline" onClick={() => setIsDrawerOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button variant="outline" onClick={() => navigate(`/accounts/${selectedAccount.id}/edit`)}>
-                    Edit
-                  </Button>
-                  <Button variant="destructive" onClick={handleDelete}>
-                    Delete
-                  </Button>
-                </div>
-              </div>
-            )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-type">Account Type</Label>
+                      <Select
+                        value={selectedAccount.type}
+                        onValueChange={(value) =>
+                          setSelectedAccount({
+                            ...selectedAccount,
+                            type: value,
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select account type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {accountTypes.map((type) => (
+                            <SelectItem key={type} value={type}>
+                              {type}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-balance">Current Balance</Label>
+                      <Input
+                        id="edit-balance"
+                        type="number"
+                        value={selectedAccount.balance}
+                        onChange={(e) =>
+                          setSelectedAccount({
+                            ...selectedAccount,
+                            balance: parseFloat(e.target.value),
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-medium">Balance History</h3>
+                      <div className="h-[200px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={selectedAccount.history}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="date" />
+                            <YAxis />
+                            <Tooltip />
+                            <Line
+                              type="monotone"
+                              dataKey="balance"
+                              stroke="#8884d8"
+                              strokeWidth={2}
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </ScrollArea>
+          <div className="mt-auto border-t">
+            <div className="p-[2mm] flex justify-center gap-2">
+              <Button variant="outline" onClick={() => setIsEditSheetOpen(false)} className="flex-1">Cancel</Button>
+              <Button onClick={handleEditAccount} className="flex-1">Save Changes</Button>
+            </div>
           </div>
-        </DrawerContent>
-      </Drawer>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
