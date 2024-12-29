@@ -6,9 +6,9 @@ const Settings = () => {
     <Routes>
       <Route path="profile" element={<Profile />} />
       <Route
-        path="appearance"
+        path="general"
         element={
-          <h1 className="text-3xl font-bold text-gray-900">Appearance</h1>
+          <h1 className="text-3xl font-bold text-gray-900">General Settings</h1>
         }
       />
       <Route
