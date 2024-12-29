@@ -30,7 +30,6 @@ const profileFormSchema = z.object({
   newPassword: z.string().optional(),
   confirmPassword: z.string().optional(),
 }).refine((data) => {
-  // Only validate passwords if any password field is filled
   if (data.currentPassword || data.newPassword || data.confirmPassword) {
     if (!data.currentPassword || !data.newPassword || !data.confirmPassword) {
       return false;
@@ -61,13 +60,11 @@ export default function Profile() {
   });
 
   function onSubmit(data: ProfileFormValues) {
-    // Create an update object with only the fields that should be updated
     const updateData: Partial<ProfileFormValues> = {
       name: data.name,
       email: data.email,
     };
 
-    // Only include password update if all password fields are filled
     if (data.currentPassword && data.newPassword && data.confirmPassword) {
       updateData.currentPassword = data.currentPassword;
       updateData.newPassword = data.newPassword;
@@ -80,7 +77,7 @@ export default function Profile() {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-2xl font-semibold text-[#F97316]">Profile</h3>
+        <h3 className="text-3xl font-bold text-gray-900">Profile</h3>
         <p className="text-sm text-muted-foreground">
           Manage your profile information and password.
         </p>
