@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -12,53 +13,16 @@ import { PlusCircle } from "lucide-react";
 import { AccountsTable } from "@/components/accounts/AccountsTable";
 import { AccountForm } from "@/components/accounts/AccountForm";
 import { Account } from "@/types/accounts";
+import { fetchAccounts, createAccount, updateAccount } from "@/lib/api/accounts";
+import { toast } from "sonner";
 
 type SortConfig = {
   key: keyof Account | null;
   direction: "asc" | "desc";
 };
 
-const mockAccounts: Account[] = [
-  {
-    id: "1",
-    name: "Main Checking",
-    type: "Bank Account",
-    balance: 5000,
-    lastUpdated: "2024-03-20",
-    history: [
-      { date: "2024-01", balance: 4000 },
-      { date: "2024-02", balance: 4500 },
-      { date: "2024-03", balance: 5000 },
-    ],
-  },
-  {
-    id: "2",
-    name: "Investment Portfolio",
-    type: "Investment Account",
-    balance: 150000,
-    lastUpdated: "2024-03-19",
-    history: [
-      { date: "2024-01", balance: 145000 },
-      { date: "2024-02", balance: 148000 },
-      { date: "2024-03", balance: 150000 },
-    ],
-  },
-  {
-    id: "3",
-    name: "Home Property",
-    type: "Property",
-    balance: 500000,
-    lastUpdated: "2024-03-15",
-    history: [
-      { date: "2024-01", balance: 495000 },
-      { date: "2024-02", balance: 498000 },
-      { date: "2024-03", balance: 500000 },
-    ],
-  },
-];
-
 const Accounts = () => {
-  const [accounts, setAccounts] = useState<Account[]>(mockAccounts);
+  const queryClient = useQueryClient();
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     key: null,
     direction: "asc",
@@ -66,6 +30,38 @@ const Accounts = () => {
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
+
+  const { data: accounts = [], isLoading } = useQuery({
+    queryKey: ["accounts"],
+    queryFn: fetchAccounts,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: createAccount,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      setIsAddSheetOpen(false);
+      toast.success("Account created successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to create account");
+      console.error("Error creating account:", error);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, account }: { id: string; account: Partial<Account> }) =>
+      updateAccount(id, account),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      setIsEditSheetOpen(false);
+      toast.success("Account updated successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to update account");
+      console.error("Error updating account:", error);
+    },
+  });
 
   const handleSort = (key: keyof Account) => {
     setSortConfig((current) => ({
@@ -80,49 +76,26 @@ const Accounts = () => {
       }
       return a[key] < b[key] ? 1 : -1;
     });
-
-    setAccounts(sortedAccounts);
   };
 
   const handleAddAccount = (newAccount: Partial<Account>) => {
     if (newAccount.name && newAccount.type && newAccount.balance) {
-      const account: Account = {
-        id: Date.now().toString(),
-        name: newAccount.name,
-        type: newAccount.type,
-        balance: Number(newAccount.balance),
-        lastUpdated: new Date().toISOString().split('T')[0],
-        history: [
-          { date: new Date().toISOString().split('T')[0], balance: Number(newAccount.balance) }
-        ],
-      };
-      setAccounts([...accounts, account]);
-      setIsAddSheetOpen(false);
+      createMutation.mutate(newAccount);
     }
   };
 
   const handleEditAccount = (updatedAccount: Partial<Account>) => {
     if (selectedAccount && updatedAccount.name && updatedAccount.type && updatedAccount.balance) {
-      const updatedAccounts = accounts.map((account) =>
-        account.id === selectedAccount.id
-          ? {
-              ...selectedAccount,
-              ...updatedAccount,
-              lastUpdated: new Date().toISOString().split('T')[0],
-              history: [
-                ...selectedAccount.history,
-                {
-                  date: new Date().toISOString().split('T')[0],
-                  balance: Number(updatedAccount.balance),
-                },
-              ],
-            }
-          : account
-      );
-      setAccounts(updatedAccounts);
-      setIsEditSheetOpen(false);
+      updateMutation.mutate({
+        id: selectedAccount.id,
+        account: updatedAccount,
+      });
     }
   };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="space-y-6 p-6">

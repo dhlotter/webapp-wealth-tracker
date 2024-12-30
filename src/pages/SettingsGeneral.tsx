@@ -11,7 +11,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -19,28 +18,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { fetchUserSettings, updateUserSettings, type UserSettings } from "@/lib/api/settings";
 import { toast } from "sonner";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-  SheetFooter,
-} from "@/components/ui/sheet";
-import { useState } from "react";
-import { Plus } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 const generalSettingsSchema = z.object({
   currency: z.string().min(1, { message: "Please select a currency" }),
@@ -60,78 +40,43 @@ const defaultValues: Partial<GeneralSettingsValues> = {
   averageMonths: "3",
 };
 
-type AccountType = {
-  id: string;
-  name: string;
-  description: string;
-};
-
-const mockAccountTypes: AccountType[] = [
-  {
-    id: "1",
-    name: "Checking",
-    description: "Regular checking account for daily transactions",
-  },
-  {
-    id: "2",
-    name: "Savings",
-    description: "Interest-bearing savings account",
-  },
-  {
-    id: "3",
-    name: "Credit Card",
-    description: "Credit card account for tracking expenses",
-  },
-  {
-    id: "4",
-    name: "Investment",
-    description: "Investment accounts like stocks, bonds, etc.",
-  },
-  {
-    id: "5",
-    name: "Property",
-    description: "Real estate and property assets",
-  },
-];
-
 export default function SettingsGeneral() {
-  const [accountTypes, setAccountTypes] = useState<AccountType[]>(mockAccountTypes);
-  const [isNewTypeSheetOpen, setIsNewTypeSheetOpen] = useState(false);
-  const [newAccountType, setNewAccountType] = useState<Partial<AccountType>>({
-    name: "",
-    description: "",
+  const queryClient = useQueryClient();
+
+  const { data: settings, isLoading } = useQuery({
+    queryKey: ["user-settings"],
+    queryFn: fetchUserSettings,
   });
 
   const form = useForm<GeneralSettingsValues>({
     resolver: zodResolver(generalSettingsSchema),
-    defaultValues,
-    mode: "onChange",
+    defaultValues: settings || defaultValues,
+  });
+
+  const mutation = useMutation({
+    mutationFn: (data: GeneralSettingsValues) => updateUserSettings({
+      currency: data.currency,
+      locale: data.locale,
+      darkMode: data.darkMode,
+      dateFormat: data.dateFormat,
+      averageMonths: parseInt(data.averageMonths),
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user-settings"] });
+      toast.success("Settings updated successfully!");
+    },
+    onError: (error) => {
+      toast.error("Failed to update settings");
+      console.error("Error updating settings:", error);
+    },
   });
 
   function onSubmit(data: GeneralSettingsValues) {
-    toast.success("Settings updated successfully!");
-    console.log("Settings data:", data);
+    mutation.mutate(data);
   }
 
-  function handleAddAccountType() {
-    if (newAccountType.name && newAccountType.description) {
-      setAccountTypes([
-        ...accountTypes,
-        {
-          id: (accountTypes.length + 1).toString(),
-          name: newAccountType.name,
-          description: newAccountType.description,
-        },
-      ]);
-      setNewAccountType({ name: "", description: "" });
-      setIsNewTypeSheetOpen(false);
-      toast.success("Account type added successfully!");
-    }
-  }
-
-  function handleDeleteAccountType(id: string) {
-    setAccountTypes(accountTypes.filter((type) => type.id !== id));
-    toast.success("Account type deleted successfully!");
+  if (isLoading) {
+    return <div>Loading...</div>;
   }
 
   return (
@@ -139,7 +84,7 @@ export default function SettingsGeneral() {
       <div>
         <h3 className="text-3xl font-bold text-gray-900">General Settings</h3>
         <p className="text-sm text-muted-foreground">
-          Manage your application preferences and account types.
+          Manage your application preferences.
         </p>
       </div>
 
@@ -279,9 +224,6 @@ export default function SettingsGeneral() {
           <Button type="submit">Save</Button>
         </form>
       </Form>
-
-
-
     </div>
   );
-}
+};

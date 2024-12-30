@@ -9,7 +9,236 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      account_history: {
+        Row: {
+          account_id: string
+          balance: number
+          date: string
+          id: string
+        }
+        Insert: {
+          account_id: string
+          balance: number
+          date?: string
+          id?: string
+        }
+        Update: {
+          account_id?: string
+          balance?: number
+          date?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_history_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      accounts: {
+        Row: {
+          balance: number
+          created_at: string
+          id: string
+          name: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          id?: string
+          name: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          id?: string
+          name?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_categories: {
+        Row: {
+          budgeted_amount: number
+          created_at: string
+          id: string
+          name: string
+          spending_group: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          budgeted_amount?: number
+          created_at?: string
+          id?: string
+          name: string
+          spending_group: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          budgeted_amount?: number
+          created_at?: string
+          id?: string
+          name?: string
+          spending_group?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_categories_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          account_id: string
+          amount: number
+          category: string
+          date: string
+          description: string | null
+          id: string
+          merchant: string
+          notes: string | null
+          seen: boolean | null
+          spending_group: string
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          category: string
+          date?: string
+          description?: string | null
+          id?: string
+          merchant: string
+          notes?: string | null
+          seen?: boolean | null
+          spending_group: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          category?: string
+          date?: string
+          description?: string | null
+          id?: string
+          merchant?: string
+          notes?: string | null
+          seen?: boolean | null
+          spending_group?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_settings: {
+        Row: {
+          average_months: number
+          created_at: string
+          currency: string
+          dark_mode: string
+          date_format: string
+          locale: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          average_months?: number
+          created_at?: string
+          currency?: string
+          dark_mode?: string
+          date_format?: string
+          locale?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          average_months?: number
+          created_at?: string
+          currency?: string
+          dark_mode?: string
+          date_format?: string
+          locale?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_settings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
