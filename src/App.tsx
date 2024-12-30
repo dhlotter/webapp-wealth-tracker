@@ -10,7 +10,7 @@ import Transactions from "./pages/Transactions";
 import Budget from "./pages/Budget";
 import Investments from "./pages/Investments";
 import SettingsProfile from "./pages/SettingsProfile";
-import SettingsGeneral from "./pages/settingsGeneral";
+import SettingsGeneral from "./pages/SettingsGeneral";
 import SettingsBudget from "./pages/SettingsBudget";
 
 const queryClient = new QueryClient();
