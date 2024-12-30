@@ -9,7 +9,7 @@ export async function fetchAccounts() {
       name,
       type,
       balance,
-      updated_at as lastUpdated,
+      updated_at as "lastUpdated",
       account_history (
         date,
         balance
