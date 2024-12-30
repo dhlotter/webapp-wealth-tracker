@@ -2,6 +2,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Account } from "@/types/accounts";
 
 export async function fetchAccounts() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("User not authenticated");
+
   const { data, error } = await supabase
     .from("accounts")
     .select(`
@@ -15,7 +18,8 @@ export async function fetchAccounts() {
         balance
       )
     `)
-    .order("name");
+    .eq('user_id', user.id)
+    .order('name');
 
   if (error) throw error;
   
@@ -71,7 +75,8 @@ export async function updateAccount(id: string, account: Partial<Account>) {
       type: account.type,
       balance: account.balance,
     })
-    .eq("id", id)
+    .eq('id', id)
+    .eq('user_id', user.id)
     .select()
     .single();
 

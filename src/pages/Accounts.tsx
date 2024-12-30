@@ -31,7 +31,7 @@ const Accounts = () => {
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
 
-  const { data: accounts = [], isLoading } = useQuery({
+  const { data: accounts = [], isLoading, error } = useQuery({
     queryKey: ["accounts"],
     queryFn: fetchAccounts,
   });
@@ -43,8 +43,8 @@ const Accounts = () => {
       setIsAddSheetOpen(false);
       toast.success("Account created successfully");
     },
-    onError: (error) => {
-      toast.error("Failed to create account");
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to create account");
       console.error("Error creating account:", error);
     },
   });
@@ -57,8 +57,8 @@ const Accounts = () => {
       setIsEditSheetOpen(false);
       toast.success("Account updated successfully");
     },
-    onError: (error) => {
-      toast.error("Failed to update account");
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update account");
       console.error("Error updating account:", error);
     },
   });
@@ -69,23 +69,14 @@ const Accounts = () => {
       direction:
         current.key === key && current.direction === "asc" ? "desc" : "asc",
     }));
-
-    const sortedAccounts = [...accounts].sort((a, b) => {
-      if (sortConfig.direction === "asc") {
-        return a[key] > b[key] ? 1 : -1;
-      }
-      return a[key] < b[key] ? 1 : -1;
-    });
   };
 
   const handleAddAccount = (newAccount: Partial<Account>) => {
-    if (newAccount.name && newAccount.type && newAccount.balance) {
-      createMutation.mutate(newAccount);
-    }
+    createMutation.mutate(newAccount);
   };
 
   const handleEditAccount = (updatedAccount: Partial<Account>) => {
-    if (selectedAccount && updatedAccount.name && updatedAccount.type && updatedAccount.balance) {
+    if (selectedAccount) {
       updateMutation.mutate({
         id: selectedAccount.id,
         account: updatedAccount,
@@ -94,7 +85,15 @@ const Accounts = () => {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div className="flex items-center justify-center h-[200px]">Loading...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-[200px] text-destructive">
+        Error: {(error as Error).message}
+      </div>
+    );
   }
 
   return (
