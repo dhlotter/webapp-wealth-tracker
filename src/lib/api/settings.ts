@@ -12,7 +12,7 @@ export async function fetchUserSettings() {
   const { data, error } = await supabase
     .from("user_settings")
     .select("*")
-    .single();
+    .maybeSingle();
 
   if (error && error.code !== "PGRST116") throw error;
   
@@ -26,17 +26,19 @@ export async function fetchUserSettings() {
 }
 
 export async function updateUserSettings(settings: UserSettings) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("User not authenticated");
+
   const { data, error } = await supabase
     .from("user_settings")
-    .upsert([
-      {
-        currency: settings.currency,
-        locale: settings.locale,
-        dark_mode: settings.darkMode,
-        date_format: settings.dateFormat,
-        average_months: settings.averageMonths,
-      },
-    ])
+    .upsert({
+      user_id: user.id,
+      currency: settings.currency,
+      locale: settings.locale,
+      dark_mode: settings.darkMode,
+      date_format: settings.dateFormat,
+      average_months: settings.averageMonths,
+    })
     .select()
     .single();
 

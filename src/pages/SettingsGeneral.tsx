@@ -50,7 +50,13 @@ export default function SettingsGeneral() {
 
   const form = useForm<GeneralSettingsValues>({
     resolver: zodResolver(generalSettingsSchema),
-    defaultValues: settings || defaultValues,
+    defaultValues: settings ? {
+      currency: settings.currency,
+      locale: settings.locale,
+      darkMode: settings.darkMode,
+      dateFormat: settings.dateFormat,
+      averageMonths: String(settings.averageMonths),
+    } : defaultValues,
   });
 
   const mutation = useMutation({

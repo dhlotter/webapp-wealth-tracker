@@ -33,15 +33,17 @@ export async function fetchAccounts() {
 }
 
 export async function createAccount(account: Partial<Account>) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("User not authenticated");
+
   const { data, error } = await supabase
     .from("accounts")
-    .insert([
-      {
-        name: account.name,
-        type: account.type,
-        balance: account.balance,
-      },
-    ])
+    .insert({
+      name: account.name,
+      type: account.type,
+      balance: account.balance,
+      user_id: user.id,
+    })
     .select()
     .single();
 
@@ -50,17 +52,18 @@ export async function createAccount(account: Partial<Account>) {
   // Create initial history record
   await supabase
     .from("account_history")
-    .insert([
-      {
-        account_id: data.id,
-        balance: account.balance,
-      },
-    ]);
+    .insert({
+      account_id: data.id,
+      balance: account.balance,
+    });
 
   return data;
 }
 
 export async function updateAccount(id: string, account: Partial<Account>) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("User not authenticated");
+
   const { data, error } = await supabase
     .from("accounts")
     .update({
@@ -77,12 +80,10 @@ export async function updateAccount(id: string, account: Partial<Account>) {
   // Create new history record
   await supabase
     .from("account_history")
-    .insert([
-      {
-        account_id: id,
-        balance: account.balance,
-      },
-    ]);
+    .insert({
+      account_id: id,
+      balance: account.balance,
+    });
 
   return data;
 }
