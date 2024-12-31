@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
-export default function SidebarFooter() {
+export const SidebarFooter = () => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -30,4 +30,6 @@ export default function SidebarFooter() {
       </Button>
     </div>
   );
-}
+};
+
+export default SidebarFooter;
