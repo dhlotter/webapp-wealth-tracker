@@ -7,8 +7,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ArrowUpDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Account } from "@/types/accounts";
+import { formatCurrency } from "@/lib/utils/formatCurrency";
+import { useSettings } from "@/hooks/useSettings";
 
 interface AccountsTableProps {
   accounts: Account[];
@@ -17,6 +18,8 @@ interface AccountsTableProps {
 }
 
 export function AccountsTable({ accounts, onSort, onAccountClick }: AccountsTableProps) {
+  const { data: settings } = useSettings();
+
   return (
     <Table>
       <TableHeader>
@@ -69,10 +72,10 @@ export function AccountsTable({ accounts, onSort, onAccountClick }: AccountsTabl
             <TableCell>{account.name}</TableCell>
             <TableCell>{account.type}</TableCell>
             <TableCell className="text-right">
-              ${account.balance.toLocaleString()}
+              {formatCurrency(account.balance, settings?.currency, settings?.locale)}
             </TableCell>
             <TableCell>
-              {new Date(account.lastUpdated).toLocaleDateString()}
+              {new Date(account.lastUpdated).toLocaleDateString(settings?.locale)}
             </TableCell>
           </TableRow>
         ))}
