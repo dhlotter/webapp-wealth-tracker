@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -19,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchUserSettings, updateUserSettings, type UserSettings } from "@/lib/api/settings";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const generalSettingsSchema = z.object({
@@ -45,7 +44,19 @@ export default function SettingsGeneral() {
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ["user-settings"],
-    queryFn: fetchUserSettings,
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { data, error } = await supabase
+        .from("user_settings")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
   });
 
   const form = useForm<GeneralSettingsValues>({
@@ -53,20 +64,37 @@ export default function SettingsGeneral() {
     defaultValues: settings ? {
       currency: settings.currency,
       locale: settings.locale,
-      darkMode: settings.darkMode,
-      dateFormat: settings.dateFormat,
-      averageMonths: String(settings.averageMonths),
+      darkMode: settings.dark_mode,
+      dateFormat: settings.date_format,
+      averageMonths: String(settings.average_months),
+    } : defaultValues,
+    values: settings ? {
+      currency: settings.currency,
+      locale: settings.locale,
+      darkMode: settings.dark_mode,
+      dateFormat: settings.date_format,
+      averageMonths: String(settings.average_months),
     } : defaultValues,
   });
 
   const mutation = useMutation({
-    mutationFn: (data: GeneralSettingsValues) => updateUserSettings({
-      currency: data.currency,
-      locale: data.locale,
-      darkMode: data.darkMode,
-      dateFormat: data.dateFormat,
-      averageMonths: parseInt(data.averageMonths),
-    }),
+    mutationFn: async (data: GeneralSettingsValues) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { error } = await supabase
+        .from("user_settings")
+        .upsert({
+          user_id: user.id,
+          currency: data.currency,
+          locale: data.locale,
+          dark_mode: data.darkMode,
+          date_format: data.dateFormat,
+          average_months: parseInt(data.averageMonths),
+        });
+
+      if (error) throw error;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-settings"] });
       toast.success("Settings updated successfully!");
@@ -232,4 +260,4 @@ export default function SettingsGeneral() {
       </Form>
     </div>
   );
-};
+}

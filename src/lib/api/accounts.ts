@@ -12,7 +12,7 @@ export async function fetchAccounts() {
       name,
       type,
       balance,
-      updated_at as "lastUpdated",
+      updated_at,
       account_history (
         date,
         balance
@@ -28,7 +28,7 @@ export async function fetchAccounts() {
     name: account.name,
     type: account.type,
     balance: account.balance,
-    lastUpdated: account.lastUpdated,
+    lastUpdated: account.updated_at,
     history: account.account_history.map((h: any) => ({
       date: new Date(h.date).toISOString().split('T')[0],
       balance: h.balance,

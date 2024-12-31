@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const profileFormSchema = z.object({
   name: z
@@ -26,52 +28,73 @@ const profileFormSchema = z.object({
     .string()
     .min(1, { message: "This field cannot be empty." })
     .email("This is not a valid email."),
-  currentPassword: z.string().optional(),
-  newPassword: z.string().optional(),
-  confirmPassword: z.string().optional(),
-}).refine((data) => {
-  if (data.currentPassword || data.newPassword || data.confirmPassword) {
-    if (!data.currentPassword || !data.newPassword || !data.confirmPassword) {
-      return false;
-    }
-    if (data.newPassword.length < 8) {
-      return false;
-    }
-    return data.newPassword === data.confirmPassword;
-  }
-  return true;
-}, {
-  message: "Please fill all password fields and ensure passwords match",
-  path: ["confirmPassword"],
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
-const defaultValues: Partial<ProfileFormValues> = {
-  name: "John Doe",
-  email: "john@example.com",
-};
-
 export default function SettingsProfile() {
+  const queryClient = useQueryClient();
+
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ["profile"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
-    defaultValues,
-    mode: "onChange",
+    defaultValues: {
+      name: profile?.full_name || "",
+      email: profile?.email || "",
+    },
+    values: {
+      name: profile?.full_name || "",
+      email: profile?.email || "",
+    },
+  });
+
+  const mutation = useMutation({
+    mutationFn: async (data: ProfileFormValues) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          full_name: data.name,
+          email: data.email,
+        })
+        .eq("id", user.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      toast.success("Profile updated successfully!");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to update profile");
+      console.error("Error updating profile:", error);
+    },
   });
 
   function onSubmit(data: ProfileFormValues) {
-    const updateData: Partial<ProfileFormValues> = {
-      name: data.name,
-      email: data.email,
-    };
+    mutation.mutate(data);
+  }
 
-    if (data.currentPassword && data.newPassword && data.confirmPassword) {
-      updateData.currentPassword = data.currentPassword;
-      updateData.newPassword = data.newPassword;
-    }
-
-    toast.success("Profile updated successfully!");
-    console.log("Update data:", updateData);
+  if (isLoading) {
+    return <div>Loading...</div>;
   }
 
   return (
@@ -79,7 +102,7 @@ export default function SettingsProfile() {
       <div>
         <h3 className="text-3xl font-bold text-gray-900">Profile</h3>
         <p className="text-sm text-muted-foreground">
-          Manage your profile information and password.
+          Manage your profile information.
         </p>
       </div>
       <Form {...form}>
@@ -91,7 +114,7 @@ export default function SettingsProfile() {
               <FormItem>
                 <FormLabel>Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="John Doe" {...field} />
+                  <Input placeholder="Your name" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -104,54 +127,12 @@ export default function SettingsProfile() {
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="john@example.com" {...field} />
+                  <Input placeholder="your.email@example.com" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          <div className="space-y-4">
-            <h4 className="text-sm font-medium">Change Password</h4>
-            <FormField
-              control={form.control}
-              name="currentPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Current Password</FormLabel>
-                  <FormControl>
-                    <Input type="password" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="newPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>New Password</FormLabel>
-                  <FormControl>
-                    <Input type="password" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="confirmPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Confirm New Password</FormLabel>
-                  <FormControl>
-                    <Input type="password" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
           <Button type="submit">Save</Button>
         </form>
       </Form>
