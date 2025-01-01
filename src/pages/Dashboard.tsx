@@ -15,6 +15,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import PageLayout from "@/components/layout/PageLayout";
 
 // Temporary mock data
 const data = [
@@ -26,9 +27,8 @@ const data = [
 
 const Dashboard = () => {
   return (
-    <div className="space-y-8 p-6">
+    <PageLayout title="Dashboard">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
         <Select defaultValue="3m">
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Select time range" />
@@ -92,7 +92,7 @@ const Dashboard = () => {
           </ResponsiveContainer>
         </div>
       </Card>
-    </div>
+    </PageLayout>
   );
 };
 

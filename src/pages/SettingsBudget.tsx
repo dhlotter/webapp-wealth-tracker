@@ -1,16 +1,12 @@
-import React from 'react'; // Ensure you have React imported
+import PageLayout from "@/components/layout/PageLayout";
 
 const SettingsBudget = () => {
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-3xl font-bold text-gray-900">Budget</h3>
-        <p className="text-sm text-muted-foreground">
-          Manage your budget data.
-        </p>
-      </div>
-    </div>
+    <PageLayout 
+      title="Budget" 
+      description="Manage your budget data."
+    />
   );
 };
 
-export default SettingsBudget; // Export the component
+export default SettingsBudget;

@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import PageLayout from "@/components/layout/PageLayout";
 
 const profileFormSchema = z.object({
   name: z
@@ -58,10 +59,6 @@ export default function SettingsProfile() {
       name: profile?.full_name || "",
       email: profile?.email || "",
     },
-    values: {
-      name: profile?.full_name || "",
-      email: profile?.email || "",
-    },
   });
 
   const mutation = useMutation({
@@ -98,13 +95,10 @@ export default function SettingsProfile() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <h3 className="text-3xl font-bold text-gray-900">Profile</h3>
-        <p className="text-sm text-muted-foreground">
-          Manage your profile information.
-        </p>
-      </div>
+    <PageLayout 
+      title="Profile" 
+      description="Manage your profile information."
+    >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <FormField
@@ -136,6 +130,6 @@ export default function SettingsProfile() {
           <Button type="submit">Save</Button>
         </form>
       </Form>
-    </div>
+    </PageLayout>
   );
 }

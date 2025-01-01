@@ -43,6 +43,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import PageLayout from "@/components/layout/PageLayout";
 
 // Types
 type Category = {
@@ -182,9 +183,7 @@ const Budget = () => {
   };
 
   return (
-    <div className="space-y-6 p-6">
-      <h1 className="text-3xl font-bold">Budget</h1>
-
+    <PageLayout title="Budget">
       <Accordion type="single" collapsible className="space-y-4">
         {spendingGroups.map((group) => (
           <AccordionItem key={group.id} value={group.id} className="border rounded-lg p-4">
@@ -309,7 +308,7 @@ const Budget = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageLayout>
   );
 };
 

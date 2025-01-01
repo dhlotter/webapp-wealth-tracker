@@ -20,6 +20,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import PageLayout from "@/components/layout/PageLayout";
 
 const generalSettingsSchema = z.object({
   currency: z.string().min(1, { message: "Please select a currency" }),
@@ -114,14 +115,10 @@ export default function SettingsGeneral() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <h3 className="text-3xl font-bold text-gray-900">General Settings</h3>
-        <p className="text-sm text-muted-foreground">
-          Manage your application preferences.
-        </p>
-      </div>
-
+    <PageLayout 
+      title="General Settings" 
+      description="Manage your application preferences."
+    >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <FormField
@@ -258,6 +255,6 @@ export default function SettingsGeneral() {
           <Button type="submit">Save</Button>
         </form>
       </Form>
-    </div>
+    </PageLayout>
   );
 }
