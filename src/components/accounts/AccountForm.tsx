@@ -36,14 +36,21 @@ const accountTypes = [
   "Other Asset"
 ];
 
+const currencies = [
+  { value: "USD", label: "US Dollar ($)" },
+  { value: "EUR", label: "Euro (€)" },
+  { value: "GBP", label: "British Pound (£)" },
+  { value: "ZAR", label: "South African Rand (R)" },
+];
+
 export function AccountForm({ account, onSubmit, onCancel }: AccountFormProps) {
   const [formData, setFormData] = useState<Partial<Account>>(
-    account || { type: accountTypes[0] }
+    account || { type: accountTypes[0], currency: "USD" }
   );
 
   return (
-    <ScrollArea className="flex-1">
-      <div className="p-[2mm]">
+    <div className="flex flex-col h-full">
+      <ScrollArea className="flex-1 p-[2mm]">
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Account Name</Label>
@@ -70,6 +77,26 @@ export function AccountForm({ account, onSubmit, onCancel }: AccountFormProps) {
                 {accountTypes.map((type) => (
                   <SelectItem key={type} value={type}>
                     {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="currency">Currency</Label>
+            <Select
+              value={formData.currency}
+              onValueChange={(value) =>
+                setFormData({ ...formData, currency: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select currency" />
+              </SelectTrigger>
+              <SelectContent>
+                {currencies.map((currency) => (
+                  <SelectItem key={currency.value} value={currency.value}>
+                    {currency.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -112,17 +139,15 @@ export function AccountForm({ account, onSubmit, onCancel }: AccountFormProps) {
             </div>
           )}
         </div>
+      </ScrollArea>
+      <div className="mt-auto border-t p-[2mm] flex justify-end gap-2">
+        <Button variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button onClick={() => onSubmit(formData)}>
+          {account ? "Save Changes" : "Add Account"}
+        </Button>
       </div>
-      <div className="mt-auto border-t">
-        <div className="p-[2mm] flex justify-center gap-2">
-          <Button variant="outline" onClick={onCancel} className="flex-1">
-            Cancel
-          </Button>
-          <Button onClick={() => onSubmit(formData)} className="flex-1">
-            {account ? "Save Changes" : "Add Account"}
-          </Button>
-        </div>
-      </div>
-    </ScrollArea>
+    </div>
   );
 }
