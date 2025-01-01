@@ -5,7 +5,11 @@ const SettingsBudget = () => {
     <PageLayout 
       title="Budget" 
       description="Manage your budget data."
-    />
+    >
+      <div>
+        Budget settings configuration coming soon...
+      </div>
+    </PageLayout>
   );
 };
 
