@@ -26,7 +26,7 @@ const data = [
 
 const Dashboard = () => {
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 p-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
         <Select defaultValue="3m">

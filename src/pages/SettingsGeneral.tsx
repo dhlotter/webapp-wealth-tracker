@@ -114,7 +114,7 @@ export default function SettingsGeneral() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       <div>
         <h3 className="text-3xl font-bold text-gray-900">General Settings</h3>
         <p className="text-sm text-muted-foreground">
