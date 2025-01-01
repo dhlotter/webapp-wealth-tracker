@@ -12,6 +12,7 @@ export async function fetchAccounts() {
       name,
       type,
       balance,
+      currency,
       updated_at,
       account_history (
         date,
@@ -28,6 +29,7 @@ export async function fetchAccounts() {
     name: account.name,
     type: account.type,
     balance: account.balance,
+    currency: account.currency,
     lastUpdated: account.updated_at,
     history: account.account_history.map((h: any) => ({
       date: new Date(h.date).toISOString().split('T')[0],
@@ -46,6 +48,7 @@ export async function createAccount(account: Partial<Account>) {
       name: account.name,
       type: account.type,
       balance: account.balance,
+      currency: account.currency,
       user_id: user.id,
     })
     .select()
@@ -74,6 +77,7 @@ export async function updateAccount(id: string, account: Partial<Account>) {
       name: account.name,
       type: account.type,
       balance: account.balance,
+      currency: account.currency,
     })
     .eq('id', id)
     .eq('user_id', user.id)
