@@ -3,6 +3,7 @@ export type Account = {
   name: string;
   type: string;
   balance: number;
+  currency: string;
   lastUpdated: string;
   history: { date: string; balance: number }[];
 };
