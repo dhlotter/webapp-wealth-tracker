@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,14 +17,14 @@ import { fetchAccounts, createAccount, updateAccount } from "@/lib/api/accounts"
 import { toast } from "sonner";
 
 type SortConfig = {
-  key: keyof Account | null;
+  key: keyof Account;
   direction: "asc" | "desc";
 };
 
 const Accounts = () => {
   const queryClient = useQueryClient();
   const [sortConfig, setSortConfig] = useState<SortConfig>({
-    key: null,
+    key: "type",
     direction: "asc",
   });
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
@@ -34,6 +34,14 @@ const Accounts = () => {
   const { data: accounts = [], isLoading, error } = useQuery({
     queryKey: ["accounts"],
     queryFn: fetchAccounts,
+  });
+
+  const sortedAccounts = [...accounts].sort((a, b) => {
+    const compareResult = a[sortConfig.key] < b[sortConfig.key] ? -1 : 1;
+    if (sortConfig.key === "type" && a.type === b.type) {
+      return a.name < b.name ? -1 : 1;
+    }
+    return sortConfig.direction === "asc" ? compareResult : -compareResult;
   });
 
   const createMutation = useMutation({
@@ -123,7 +131,7 @@ const Accounts = () => {
       </div>
 
       <AccountsTable
-        accounts={accounts}
+        accounts={sortedAccounts}
         onSort={handleSort}
         onAccountClick={(account) => {
           setSelectedAccount(account);

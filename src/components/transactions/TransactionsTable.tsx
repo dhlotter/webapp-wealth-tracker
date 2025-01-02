@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/table";
 import { Transaction } from "@/types/transactions";
 import { formatCurrency } from "@/lib/utils/formatCurrency";
-import { useSettings } from "@/hooks/useSettings";
 import { useTransactions } from "@/hooks/useTransactions";
 
 interface TransactionsTableProps {
@@ -17,7 +16,6 @@ interface TransactionsTableProps {
 }
 
 export const TransactionsTable = ({ transactions, onTransactionClick }: TransactionsTableProps) => {
-  const { data: settings } = useSettings();
   const { markAsSeen } = useTransactions();
 
   const handleTransactionClick = async (transaction: Transaction) => {
@@ -50,15 +48,13 @@ export const TransactionsTable = ({ transactions, onTransactionClick }: Transact
               onClick={() => handleTransactionClick(transaction)}
             >
               <TableCell>
-                {new Date(transaction.date).toLocaleDateString(settings?.locale, {
-                  dateStyle: "medium",
-                })}
+                {new Date(transaction.date).toLocaleDateString()}
               </TableCell>
               <TableCell>{transaction.merchant}</TableCell>
               <TableCell>{transaction.description}</TableCell>
               <TableCell>{`${transaction.spending_group} - ${transaction.category}`}</TableCell>
               <TableCell className="text-right">
-                {formatCurrency(transaction.amount, settings?.currency, settings?.locale)}
+                {formatCurrency(transaction.amount, transaction.accounts.currency)}
               </TableCell>
               <TableCell>{transaction.notes}</TableCell>
             </TableRow>

@@ -9,7 +9,6 @@ import {
 import { ArrowUpDown } from "lucide-react";
 import { Account } from "@/types/accounts";
 import { formatCurrency } from "@/lib/utils/formatCurrency";
-import { useSettings } from "@/hooks/useSettings";
 
 interface AccountsTableProps {
   accounts: Account[];
@@ -18,27 +17,25 @@ interface AccountsTableProps {
 }
 
 export function AccountsTable({ accounts, onSort, onAccountClick }: AccountsTableProps) {
-  const { data: settings } = useSettings();
-
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead
             className="cursor-pointer"
-            onClick={() => onSort("name")}
+            onClick={() => onSort("type")}
           >
             <div className="flex items-center">
-              Account Name
+              Type
               <ArrowUpDown className="ml-2 h-4 w-4" />
             </div>
           </TableHead>
           <TableHead
             className="cursor-pointer"
-            onClick={() => onSort("type")}
+            onClick={() => onSort("name")}
           >
             <div className="flex items-center">
-              Type
+              Account Name
               <ArrowUpDown className="ml-2 h-4 w-4" />
             </div>
           </TableHead>
@@ -69,13 +66,13 @@ export function AccountsTable({ accounts, onSort, onAccountClick }: AccountsTabl
             className="cursor-pointer hover:bg-muted/50"
             onClick={() => onAccountClick(account)}
           >
-            <TableCell>{account.name}</TableCell>
             <TableCell>{account.type}</TableCell>
+            <TableCell>{account.name}</TableCell>
             <TableCell className="text-right">
-              {formatCurrency(account.balance, settings?.currency, settings?.locale)}
+              {formatCurrency(account.balance, account.currency)}
             </TableCell>
             <TableCell>
-              {new Date(account.lastUpdated).toLocaleDateString(settings?.locale)}
+              {new Date(account.lastUpdated).toLocaleDateString()}
             </TableCell>
           </TableRow>
         ))}
