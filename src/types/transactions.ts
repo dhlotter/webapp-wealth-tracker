@@ -1,17 +1,17 @@
-export type QuickFilter = "all" | "current" | "unseen";
-
-export type Transaction = {
+export interface Transaction {
   id: string;
+  user_id: string;
+  account_id: string;
   date: string;
   merchant: string;
-  description: string;
+  description?: string;
   spending_group: string;
   category: string;
   amount: number;
-  account_id: string;
-  notes: string;
-  seen: boolean;
-  accounts: {
+  notes?: string;
+  seen?: boolean;
+  accounts?: {
+    name: string;
     currency: string;
   };
-};
+}

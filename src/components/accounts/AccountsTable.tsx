@@ -1,82 +1,46 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { ArrowUpDown } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Account } from "@/types/accounts";
 import { formatCurrency } from "@/lib/utils/formatCurrency";
+import { format } from "date-fns";
 
 interface AccountsTableProps {
   accounts: Account[];
-  onSort: (key: keyof Account) => void;
-  onAccountClick: (account: Account) => void;
 }
 
-export function AccountsTable({ accounts, onSort, onAccountClick }: AccountsTableProps) {
+export const AccountsTable = ({ accounts }: AccountsTableProps) => {
+  // Sort accounts by type first, then by name
+  const sortedAccounts = [...accounts].sort((a, b) => {
+    const typeComparison = a.type.localeCompare(b.type);
+    if (typeComparison !== 0) return typeComparison;
+    return a.name.localeCompare(b.name);
+  });
+
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead
-            className="cursor-pointer"
-            onClick={() => onSort("type")}
-          >
-            <div className="flex items-center">
-              Type
-              <ArrowUpDown className="ml-2 h-4 w-4" />
-            </div>
-          </TableHead>
-          <TableHead
-            className="cursor-pointer"
-            onClick={() => onSort("name")}
-          >
-            <div className="flex items-center">
-              Account Name
-              <ArrowUpDown className="ml-2 h-4 w-4" />
-            </div>
-          </TableHead>
-          <TableHead
-            className="cursor-pointer text-right"
-            onClick={() => onSort("balance")}
-          >
-            <div className="flex items-center justify-end">
-              Balance
-              <ArrowUpDown className="ml-2 h-4 w-4" />
-            </div>
-          </TableHead>
-          <TableHead
-            className="cursor-pointer"
-            onClick={() => onSort("lastUpdated")}
-          >
-            <div className="flex items-center">
-              Last Updated
-              <ArrowUpDown className="ml-2 h-4 w-4" />
-            </div>
-          </TableHead>
+          <TableHead>Type</TableHead>
+          <TableHead>Name</TableHead>
+          <TableHead className="text-right">Balance</TableHead>
+          <TableHead>Last Updated</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {accounts.map((account) => (
-          <TableRow
-            key={account.id}
-            className="cursor-pointer hover:bg-muted/50"
-            onClick={() => onAccountClick(account)}
-          >
-            <TableCell>{account.type}</TableCell>
+        {sortedAccounts.map((account) => (
+          <TableRow key={account.id}>
+            <TableCell className="font-medium">{account.type}</TableCell>
             <TableCell>{account.name}</TableCell>
             <TableCell className="text-right">
               {formatCurrency(account.balance, account.currency)}
             </TableCell>
             <TableCell>
-              {new Date(account.lastUpdated).toLocaleDateString()}
+              {format(new Date(account.lastUpdated), "MMM d, yyyy")}
             </TableCell>
           </TableRow>
         ))}
       </TableBody>
     </Table>
   );
-}
+};
+
+export default AccountsTable;
