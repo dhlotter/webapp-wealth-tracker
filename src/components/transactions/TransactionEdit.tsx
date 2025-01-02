@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,6 +26,19 @@ export const TransactionEdit = ({ transaction, onClose }: TransactionEditProps) 
     spending_group: transaction.spending_group,
     category: transaction.category,
     notes: transaction.notes,
+    account_id: transaction.account_id,
+  });
+
+  const { data: accounts } = useQuery({
+    queryKey: ["accounts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("accounts")
+        .select("id, name")
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
   });
 
   const updateMutation = useMutation({
@@ -58,6 +71,25 @@ export const TransactionEdit = ({ transaction, onClose }: TransactionEditProps) 
       <ScrollArea className="flex-1 p-[2mm]">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
+            <Label htmlFor="account">Account</Label>
+            <Select
+              value={formData.account_id}
+              onValueChange={(value) => setFormData({ ...formData, account_id: value })}
+            >
+              <SelectTrigger id="account">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {accounts?.map((account) => (
+                  <SelectItem key={account.id} value={account.id}>
+                    {account.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="merchant">Merchant</Label>
             <Input
               id="merchant"
@@ -79,7 +111,7 @@ export const TransactionEdit = ({ transaction, onClose }: TransactionEditProps) 
             <Label htmlFor="amount">Amount</Label>
             <Input 
               id="amount" 
-              value={formatCurrency(transaction.amount, settings?.currency, settings?.locale)} 
+              value={formatCurrency(transaction.amount, transaction.accounts?.currency)} 
               disabled 
             />
           </div>

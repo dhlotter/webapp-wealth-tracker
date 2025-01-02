@@ -3,12 +3,26 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AdvancedSearchProps {
   onClose: () => void;
 }
 
 export const AdvancedSearch = ({ onClose }: AdvancedSearchProps) => {
+  const { data: accounts } = useQuery({
+    queryKey: ["accounts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("accounts")
+        .select("id, name")
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   return (
     <ScrollArea className="flex-1 p-[2mm]">
       <form className="space-y-4">
@@ -23,6 +37,22 @@ export const AdvancedSearch = ({ onClose }: AdvancedSearchProps) => {
               <SelectItem value="last-30">Last 30 days</SelectItem>
               <SelectItem value="last-90">Last 90 days</SelectItem>
               <SelectItem value="custom">Custom range</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="account">Account</Label>
+          <Select>
+            <SelectTrigger id="account">
+              <SelectValue placeholder="Select account" />
+            </SelectTrigger>
+            <SelectContent>
+              {accounts?.map((account) => (
+                <SelectItem key={account.id} value={account.id}>
+                  {account.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

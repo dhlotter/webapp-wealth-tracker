@@ -15,3 +15,5 @@ export interface Transaction {
     currency: string;
   };
 }
+
+export type QuickFilter = "all" | "current" | "unseen";
