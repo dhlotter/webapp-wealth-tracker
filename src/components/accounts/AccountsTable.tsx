@@ -26,7 +26,7 @@ export const AccountsTable = ({ accounts, onAccountClick, onSort }: AccountsTabl
         <TableRow>
           <TableHead onClick={() => onSort?.('type')} className={onSort ? "cursor-pointer hover:bg-muted" : ""}>Type</TableHead>
           <TableHead onClick={() => onSort?.('name')} className={onSort ? "cursor-pointer hover:bg-muted" : ""}>Name</TableHead>
-          <TableHead className="text-right" onClick={() => onSort?.('balance')} className={onSort ? "cursor-pointer hover:bg-muted text-right" : "text-right"}>Balance</TableHead>
+          <TableHead onClick={() => onSort?.('balance')} className={onSort ? "cursor-pointer hover:bg-muted text-right" : "text-right"}>Balance</TableHead>
           <TableHead onClick={() => onSort?.('lastUpdated')} className={onSort ? "cursor-pointer hover:bg-muted" : ""}>Last Updated</TableHead>
         </TableRow>
       </TableHeader>
