@@ -7,9 +7,10 @@ import { useSettings } from "@/hooks/useSettings";
 interface AccountsTableProps {
   accounts: Account[];
   onAccountClick?: (account: Account) => void;
+  onSort?: (key: keyof Account) => void;
 }
 
-export const AccountsTable = ({ accounts, onAccountClick }: AccountsTableProps) => {
+export const AccountsTable = ({ accounts, onAccountClick, onSort }: AccountsTableProps) => {
   const { data: settings } = useSettings();
   
   // Sort accounts by type first, then by name
@@ -23,10 +24,10 @@ export const AccountsTable = ({ accounts, onAccountClick }: AccountsTableProps) 
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Type</TableHead>
-          <TableHead>Name</TableHead>
-          <TableHead className="text-right">Balance</TableHead>
-          <TableHead>Last Updated</TableHead>
+          <TableHead onClick={() => onSort?.('type')} className={onSort ? "cursor-pointer hover:bg-muted" : ""}>Type</TableHead>
+          <TableHead onClick={() => onSort?.('name')} className={onSort ? "cursor-pointer hover:bg-muted" : ""}>Name</TableHead>
+          <TableHead className="text-right" onClick={() => onSort?.('balance')} className={onSort ? "cursor-pointer hover:bg-muted text-right" : "text-right"}>Balance</TableHead>
+          <TableHead onClick={() => onSort?.('lastUpdated')} className={onSort ? "cursor-pointer hover:bg-muted" : ""}>Last Updated</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
