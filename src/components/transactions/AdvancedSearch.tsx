@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DatePicker } from "@/components/ui/date-picker";
 import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
 
 interface AdvancedSearchProps {
   onClose: () => void;
@@ -16,10 +17,11 @@ interface AdvancedSearchProps {
 export const AdvancedSearch = ({ onClose, onApplyFilters }: AdvancedSearchProps) => {
   const [fromDate, setFromDate] = useState<Date>();
   const [toDate, setToDate] = useState<Date>();
-  const [selectedAccount, setSelectedAccount] = useState<string>();
+  const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
   const [amountMin, setAmountMin] = useState<string>("");
   const [amountMax, setAmountMax] = useState<string>("");
-  const [spendingGroup, setSpendingGroup] = useState<string>();
+  const [selectedSpendingGroups, setSelectedSpendingGroups] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   const { data: accounts } = useQuery({
     queryKey: ["accounts"],
@@ -38,12 +40,37 @@ export const AdvancedSearch = ({ onClose, onApplyFilters }: AdvancedSearchProps)
     onApplyFilters({
       fromDate,
       toDate,
-      accountId: selectedAccount,
+      accountIds: selectedAccounts,
       amountMin: amountMin ? parseFloat(amountMin) : undefined,
       amountMax: amountMax ? parseFloat(amountMax) : undefined,
-      spendingGroup,
+      spendingGroups: selectedSpendingGroups,
+      categories: selectedCategories,
     });
     onClose();
+  };
+
+  const toggleAccount = (accountId: string) => {
+    setSelectedAccounts(prev => 
+      prev.includes(accountId) 
+        ? prev.filter(id => id !== accountId)
+        : [...prev, accountId]
+    );
+  };
+
+  const toggleSpendingGroup = (group: string) => {
+    setSelectedSpendingGroups(prev =>
+      prev.includes(group)
+        ? prev.filter(g => g !== group)
+        : [...prev, group]
+    );
+  };
+
+  const toggleCategory = (category: string) => {
+    setSelectedCategories(prev =>
+      prev.includes(category)
+        ? prev.filter(c => c !== category)
+        : [...prev, category]
+    );
   };
 
   return (
@@ -56,20 +83,40 @@ export const AdvancedSearch = ({ onClose, onApplyFilters }: AdvancedSearchProps)
               selected={fromDate}
               onSelect={setFromDate}
               placeholder="From date"
+              className="flex-1"
             />
             <DatePicker
               selected={toDate}
               onSelect={setToDate}
               placeholder="To date"
+              className="flex-1"
             />
           </div>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="account">Account</Label>
-          <Select value={selectedAccount} onValueChange={setSelectedAccount}>
-            <SelectTrigger id="account">
-              <SelectValue placeholder="Select account" />
+          <Label>Accounts</Label>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {selectedAccounts.map(accountId => {
+              const account = accounts?.find(a => a.id === accountId);
+              return account ? (
+                <Badge 
+                  key={account.id}
+                  variant="secondary"
+                  className="cursor-pointer"
+                  onClick={() => toggleAccount(account.id)}
+                >
+                  {`${account.type} - ${account.name}`} ×
+                </Badge>
+              ) : null;
+            })}
+          </div>
+          <Select
+            onValueChange={toggleAccount}
+            value={undefined}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select accounts" />
             </SelectTrigger>
             <SelectContent>
               {accounts?.map((account) => (
@@ -86,35 +133,80 @@ export const AdvancedSearch = ({ onClose, onApplyFilters }: AdvancedSearchProps)
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="amount-min">Amount Range</Label>
+          <Label>Amount Range</Label>
           <div className="flex gap-2">
             <Input 
-              id="amount-min" 
               placeholder="Min amount" 
               type="number" 
               value={amountMin}
               onChange={(e) => setAmountMin(e.target.value)}
+              className="flex-1"
             />
             <Input 
-              id="amount-max" 
               placeholder="Max amount" 
               type="number"
               value={amountMax}
               onChange={(e) => setAmountMax(e.target.value)}
+              className="flex-1"
             />
           </div>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="spending-group">Spending Group</Label>
-          <Select value={spendingGroup} onValueChange={setSpendingGroup}>
-            <SelectTrigger id="spending-group">
-              <SelectValue placeholder="Select spending group" />
+          <Label>Spending Groups</Label>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {selectedSpendingGroups.map(group => (
+              <Badge 
+                key={group}
+                variant="secondary"
+                className="cursor-pointer"
+                onClick={() => toggleSpendingGroup(group)}
+              >
+                {group} ×
+              </Badge>
+            ))}
+          </div>
+          <Select
+            onValueChange={toggleSpendingGroup}
+            value={undefined}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select spending groups" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="day-to-day">Day to Day</SelectItem>
               <SelectItem value="recurring">Recurring</SelectItem>
               <SelectItem value="invest-save-repay">Invest/Save/Repay</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Categories</Label>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {selectedCategories.map(category => (
+              <Badge 
+                key={category}
+                variant="secondary"
+                className="cursor-pointer"
+                onClick={() => toggleCategory(category)}
+              >
+                {category} ×
+              </Badge>
+            ))}
+          </div>
+          <Select
+            onValueChange={toggleCategory}
+            value={undefined}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select categories" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Shopping">Shopping</SelectItem>
+              <SelectItem value="Groceries">Groceries</SelectItem>
+              <SelectItem value="Home">Home</SelectItem>
+              <SelectItem value="Electronics">Electronics</SelectItem>
             </SelectContent>
           </Select>
         </div>

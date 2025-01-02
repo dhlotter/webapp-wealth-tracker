@@ -34,7 +34,7 @@ export const TransactionEdit = ({ transaction, onClose }: TransactionEditProps) 
     queryFn: async () => {
       const { data, error } = await supabase
         .from("accounts")
-        .select("id, name")
+        .select("id, name, type")
         .order("name");
       if (error) throw error;
       return data;
@@ -66,27 +66,20 @@ export const TransactionEdit = ({ transaction, onClose }: TransactionEditProps) 
     updateMutation.mutate(formData);
   };
 
+  const selectedAccount = accounts?.find(account => account.id === transaction.account_id);
+
   return (
     <div className="flex flex-col h-full">
       <ScrollArea className="flex-1 p-[2mm]">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="account">Account</Label>
-            <Select
-              value={formData.account_id}
-              onValueChange={(value) => setFormData({ ...formData, account_id: value })}
-            >
-              <SelectTrigger id="account">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {accounts?.map((account) => (
-                  <SelectItem key={account.id} value={account.id}>
-                    {account.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Input
+              id="account"
+              value={selectedAccount ? `${selectedAccount.type} - ${selectedAccount.name}` : ''}
+              disabled
+              className="bg-muted"
+            />
           </div>
 
           <div className="space-y-2">
@@ -113,6 +106,7 @@ export const TransactionEdit = ({ transaction, onClose }: TransactionEditProps) 
               id="amount" 
               value={formatCurrency(transaction.amount, transaction.accounts?.currency)} 
               disabled 
+              className="bg-muted"
             />
           </div>
 
@@ -122,11 +116,11 @@ export const TransactionEdit = ({ transaction, onClose }: TransactionEditProps) 
               value={formData.spending_group}
               onValueChange={(value) => setFormData({ ...formData, spending_group: value })}
             >
-              <SelectTrigger id="spending-group">
+              <SelectTrigger id="spending-group" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="day to day">Day to Day</SelectItem>
+                <SelectItem value="day-to-day">Day to Day</SelectItem>
                 <SelectItem value="recurring">Recurring</SelectItem>
                 <SelectItem value="invest-save-repay">Invest/Save/Repay</SelectItem>
               </SelectContent>
@@ -139,7 +133,7 @@ export const TransactionEdit = ({ transaction, onClose }: TransactionEditProps) 
               value={formData.category}
               onValueChange={(value) => setFormData({ ...formData, category: value })}
             >
-              <SelectTrigger id="category">
+              <SelectTrigger id="category" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
