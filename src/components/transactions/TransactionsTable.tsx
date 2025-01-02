@@ -3,22 +3,53 @@ import { Transaction } from "@/types/transactions";
 import { formatCurrency } from "@/lib/utils/formatCurrency";
 import { format } from "date-fns";
 import { useSettings } from "@/hooks/useSettings";
+import { ArrowUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface TransactionsTableProps {
   transactions: Transaction[];
   onTransactionClick?: (transaction: Transaction) => void;
+  onSort?: (key: keyof Transaction) => void;
+  sortKey?: keyof Transaction;
+  sortDirection?: 'asc' | 'desc';
 }
 
-export const TransactionsTable = ({ transactions, onTransactionClick }: TransactionsTableProps) => {
+export const TransactionsTable = ({ 
+  transactions, 
+  onTransactionClick,
+  onSort,
+  sortKey,
+  sortDirection
+}: TransactionsTableProps) => {
   const { data: settings } = useSettings();
+
+  const getSortIcon = (key: keyof Transaction) => {
+    if (sortKey !== key) return null;
+    return (
+      <ArrowUpDown className={cn(
+        "ml-2 h-4 w-4",
+        sortDirection === 'desc' ? "transform rotate-180" : ""
+      )} />
+    );
+  };
 
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Date</TableHead>
+          <TableHead 
+            onClick={() => onSort?.('date')} 
+            className={onSort ? "cursor-pointer hover:bg-muted" : ""}
+          >
+            Date {getSortIcon('date')}
+          </TableHead>
           <TableHead>Account</TableHead>
-          <TableHead>Merchant</TableHead>
+          <TableHead 
+            onClick={() => onSort?.('merchant')} 
+            className={onSort ? "cursor-pointer hover:bg-muted" : ""}
+          >
+            Merchant {getSortIcon('merchant')}
+          </TableHead>
           <TableHead>Category</TableHead>
           <TableHead className="text-right">Amount</TableHead>
         </TableRow>
@@ -35,7 +66,7 @@ export const TransactionsTable = ({ transactions, onTransactionClick }: Transact
             </TableCell>
             <TableCell>{transaction.accounts?.name}</TableCell>
             <TableCell>{transaction.merchant}</TableCell>
-            <TableCell>{transaction.category}</TableCell>
+            <TableCell>{`${transaction.spending_group} - ${transaction.category}`}</TableCell>
             <TableCell className="text-right">
               {formatCurrency(transaction.amount, transaction.accounts?.currency)}
             </TableCell>

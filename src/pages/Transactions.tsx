@@ -15,6 +15,7 @@ import { useTransactions } from "@/hooks/useTransactions";
 import { Transaction, QuickFilter } from "@/types/transactions";
 import { AdvancedSearch } from "@/components/transactions/AdvancedSearch";
 import { TransactionEdit } from "@/components/transactions/TransactionEdit";
+import { startOfDay, endOfDay } from "date-fns";
 
 const Transactions = () => {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
@@ -22,8 +23,20 @@ const Transactions = () => {
   const [isAdvancedSearchOpen, setIsAdvancedSearchOpen] = useState(false);
   const [quickFilter, setQuickFilter] = useState<QuickFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortKey, setSortKey] = useState<keyof Transaction>("date");
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [advancedFilters, setAdvancedFilters] = useState<any>(null);
 
   const { data: transactions = [], isLoading, error } = useTransactions();
+
+  const handleSort = (key: keyof Transaction) => {
+    if (sortKey === key) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDirection('asc');
+    }
+  };
 
   const filteredTransactions = transactions.filter(transaction => {
     // Quick filters
@@ -36,6 +49,28 @@ const Transactions = () => {
       }
     } else if (quickFilter === "unseen" && transaction.seen) {
       return false;
+    }
+
+    // Advanced filters
+    if (advancedFilters) {
+      if (advancedFilters.fromDate && new Date(transaction.date) < startOfDay(advancedFilters.fromDate)) {
+        return false;
+      }
+      if (advancedFilters.toDate && new Date(transaction.date) > endOfDay(advancedFilters.toDate)) {
+        return false;
+      }
+      if (advancedFilters.accountId && transaction.account_id !== advancedFilters.accountId) {
+        return false;
+      }
+      if (advancedFilters.amountMin && transaction.amount < advancedFilters.amountMin) {
+        return false;
+      }
+      if (advancedFilters.amountMax && transaction.amount > advancedFilters.amountMax) {
+        return false;
+      }
+      if (advancedFilters.spendingGroup && transaction.spending_group !== advancedFilters.spendingGroup) {
+        return false;
+      }
     }
 
     // Search query
@@ -52,6 +87,17 @@ const Transactions = () => {
     }
 
     return true;
+  }).sort((a, b) => {
+    if (sortKey === 'date') {
+      return sortDirection === 'asc' 
+        ? new Date(a.date).getTime() - new Date(b.date).getTime()
+        : new Date(b.date).getTime() - new Date(a.date).getTime();
+    }
+    const aValue = a[sortKey];
+    const bValue = b[sortKey];
+    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+    return 0;
   });
 
   if (isLoading) {
@@ -79,8 +125,9 @@ const Transactions = () => {
           onClick={() => {
             setQuickFilter("all");
             setSearchQuery("");
+            setAdvancedFilters(null);
           }}
-          disabled={quickFilter === "all" && !searchQuery}
+          disabled={quickFilter === "all" && !searchQuery && !advancedFilters}
         >
           <X className="h-4 w-4 mr-2" />
           Clear Filters
@@ -101,6 +148,9 @@ const Transactions = () => {
           setSelectedTransaction(transaction);
           setIsEditSheetOpen(true);
         }}
+        onSort={handleSort}
+        sortKey={sortKey}
+        sortDirection={sortDirection}
       />
 
       {selectedTransaction && (
@@ -128,7 +178,10 @@ const Transactions = () => {
               Filter transactions using multiple criteria
             </SheetDescription>
           </SheetHeader>
-          <AdvancedSearch onClose={() => setIsAdvancedSearchOpen(false)} />
+          <AdvancedSearch 
+            onClose={() => setIsAdvancedSearchOpen(false)}
+            onApplyFilters={setAdvancedFilters}
+          />
         </SheetContent>
       </Sheet>
     </div>
