@@ -14,7 +14,20 @@ const generalSettingsSchema = z.object({
 
 export type GeneralSettingsValues = z.infer<typeof generalSettingsSchema>;
 
+const defaultValues = {
+  currency: "USD",
+  locale: "en-US",
+  darkMode: "light",
+  dateFormat: "MM/dd/yyyy",
+  averageMonths: "3",
+};
+
 export const useSettingsForm = () => {
+  const form = useForm<GeneralSettingsValues>({
+    resolver: zodResolver(generalSettingsSchema),
+    defaultValues,
+  });
+
   const { data: settings, isLoading } = useQuery({
     queryKey: ["user-settings"],
     queryFn: async () => {
@@ -32,18 +45,7 @@ export const useSettingsForm = () => {
     },
   });
 
-  const form = useForm<GeneralSettingsValues>({
-    resolver: zodResolver(generalSettingsSchema),
-    defaultValues: {
-      currency: "",
-      locale: "",
-      darkMode: "",
-      dateFormat: "",
-      averageMonths: "",
-    },
-  });
-
-  // Reset form with database values when they're loaded
+  // Only reset form when we have settings data
   if (settings && !isLoading) {
     form.reset({
       currency: settings.currency,
@@ -51,7 +53,7 @@ export const useSettingsForm = () => {
       darkMode: settings.dark_mode,
       dateFormat: settings.date_format,
       averageMonths: String(settings.average_months),
-    });
+    }, { keepDefaultValues: true });
   }
 
   return {
