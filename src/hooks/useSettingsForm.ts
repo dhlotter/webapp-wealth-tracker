@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 
 const generalSettingsSchema = z.object({
   currency: z.string().min(1, { message: "Please select a currency" }),
@@ -14,7 +15,7 @@ const generalSettingsSchema = z.object({
 
 export type GeneralSettingsValues = z.infer<typeof generalSettingsSchema>;
 
-const defaultValues = {
+const defaultValues: GeneralSettingsValues = {
   currency: "USD",
   locale: "en-US",
   darkMode: "light",
@@ -45,16 +46,17 @@ export const useSettingsForm = () => {
     },
   });
 
-  // Only reset form when we have settings data
-  if (settings && !isLoading) {
-    form.reset({
-      currency: settings.currency,
-      locale: settings.locale,
-      darkMode: settings.dark_mode,
-      dateFormat: settings.date_format,
-      averageMonths: String(settings.average_months),
-    }, { keepDefaultValues: true });
-  }
+  useEffect(() => {
+    if (settings && !isLoading) {
+      form.reset({
+        currency: settings.currency,
+        locale: settings.locale,
+        darkMode: settings.dark_mode,
+        dateFormat: settings.date_format,
+        averageMonths: String(settings.average_months),
+      });
+    }
+  }, [settings, isLoading, form]);
 
   return {
     form,
