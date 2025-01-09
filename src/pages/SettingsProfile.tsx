@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import PageLayout from "@/components/layout/PageLayout";
+import { useEffect } from "react";
 
 const profileFormSchema = z.object({
   name: z
@@ -33,8 +34,17 @@ const profileFormSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
+const defaultValues: ProfileFormValues = {
+  name: "",
+  email: "",
+};
+
 export default function SettingsProfile() {
   const queryClient = useQueryClient();
+  const form = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileFormSchema),
+    defaultValues,
+  });
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ["profile"],
@@ -53,13 +63,14 @@ export default function SettingsProfile() {
     },
   });
 
-  const form = useForm<ProfileFormValues>({
-    resolver: zodResolver(profileFormSchema),
-    defaultValues: {
-      name: profile?.full_name || "",
-      email: profile?.email || "",
-    },
-  });
+  useEffect(() => {
+    if (profile && !isLoading) {
+      form.reset({
+        name: profile.full_name || "",
+        email: profile.email || "",
+      });
+    }
+  }, [profile, isLoading, form]);
 
   const mutation = useMutation({
     mutationFn: async (data: ProfileFormValues) => {
@@ -91,7 +102,14 @@ export default function SettingsProfile() {
   }
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <PageLayout 
+        title="Profile" 
+        description="Manage your profile information."
+      >
+        <div>Loading...</div>
+      </PageLayout>
+    );
   }
 
   return (
