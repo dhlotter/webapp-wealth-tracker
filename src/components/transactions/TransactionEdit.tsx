@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Transaction } from "@/types/transactions";
 import { formatCurrency } from "@/lib/utils/formatCurrency";
 import { useSettings } from "@/hooks/useSettings";
+import { useSpendingGroups } from "@/hooks/useSpendingGroups";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -19,6 +20,7 @@ interface TransactionEditProps {
 
 export const TransactionEdit = ({ transaction, onClose }: TransactionEditProps) => {
   const { data: settings } = useSettings();
+  const { data: spendingGroups = [] } = useSpendingGroups();
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState<Partial<Transaction>>({
     merchant: transaction.merchant,
@@ -120,9 +122,11 @@ export const TransactionEdit = ({ transaction, onClose }: TransactionEditProps) 
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="day-to-day">Day to Day</SelectItem>
-                <SelectItem value="recurring">Recurring</SelectItem>
-                <SelectItem value="invest-save-repay">Invest/Save/Repay</SelectItem>
+                {spendingGroups.map((group) => (
+                  <SelectItem key={group.id} value={group.name}>
+                    {group.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
