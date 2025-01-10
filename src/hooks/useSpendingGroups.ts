@@ -21,9 +21,15 @@ export const useSpendingGroups = () => {
 
   const createMutation = useMutation({
     mutationFn: async (name: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
       const { error } = await supabase
         .from("spending_groups")
-        .insert({ name });
+        .insert({ 
+          name,
+          user_id: user.id 
+        });
 
       if (error) throw error;
     },
