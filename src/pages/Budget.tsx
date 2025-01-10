@@ -1,24 +1,10 @@
 import { useState } from "react";
 import PageLayout from "@/components/layout/PageLayout";
 import { MonthSelector } from "@/components/budget/MonthSelector";
+import { BudgetGroup } from "@/components/budget/BudgetGroup";
 import { useBudgetCategories } from "@/hooks/useBudgetCategories";
 import { useSettings } from "@/hooks/useSettings";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Progress } from "@/components/ui/progress";
-import { formatCurrency } from "@/lib/utils/formatCurrency";
+import { Accordion } from "@/components/ui/accordion";
 
 const Budget = () => {
   const [selectedMonth, setSelectedMonth] = useState(new Date());
@@ -68,56 +54,13 @@ const Budget = () => {
 
       <Accordion type="single" collapsible className="space-y-4">
         {Object.entries(groupedCategories).map(([group, categories]) => (
-          <AccordionItem key={group} value={group} className="border rounded-lg p-4">
-            <AccordionTrigger className="hover:no-underline">
-              <div className="w-full">
-                <div className="flex justify-between items-center mb-2">
-                  <h2 className="text-xl font-semibold">{group}</h2>
-                  <span className="text-sm text-muted-foreground">
-                    {formatCurrency(groupTotals[group].spent)} of {formatCurrency(groupTotals[group].budgeted)}
-                  </span>
-                </div>
-                <Progress 
-                  value={(groupTotals[group].spent / groupTotals[group].budgeted) * 100} 
-                  className="h-2" 
-                />
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="pt-4">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Category</TableHead>
-                    <TableHead className="text-right">Budgeted</TableHead>
-                    <TableHead className="text-right">Spent</TableHead>
-                    <TableHead className="text-right">Remaining</TableHead>
-                    <TableHead className="text-right">Average ({settings?.average_months || 3}mo)</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {categories
-                    .sort((a, b) => a.name.localeCompare(b.name))
-                    .map((category) => (
-                      <TableRow key={category.id}>
-                        <TableCell>{category.name}</TableCell>
-                        <TableCell className="text-right">
-                          {formatCurrency(category.budgeted_amount)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {formatCurrency(category.spent_amount)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {formatCurrency(category.budgeted_amount - category.spent_amount)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {formatCurrency(category.average_spend)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                </TableBody>
-              </Table>
-            </AccordionContent>
-          </AccordionItem>
+          <BudgetGroup
+            key={group}
+            group={group}
+            categories={categories}
+            groupTotals={groupTotals[group]}
+            averageMonths={settings?.average_months || 3}
+          />
         ))}
       </Accordion>
     </PageLayout>

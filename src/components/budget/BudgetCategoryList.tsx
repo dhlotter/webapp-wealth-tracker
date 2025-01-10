@@ -1,0 +1,54 @@
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { formatCurrency } from "@/lib/utils/formatCurrency";
+
+interface BudgetCategoryListProps {
+  categories: any[];
+  averageMonths: number;
+}
+
+export const BudgetCategoryList = ({ 
+  categories, 
+  averageMonths 
+}: BudgetCategoryListProps) => {
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Category</TableHead>
+          <TableHead className="text-right">Budgeted</TableHead>
+          <TableHead className="text-right">Spent</TableHead>
+          <TableHead className="text-right">Remaining</TableHead>
+          <TableHead className="text-right">Average ({averageMonths}mo)</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {categories
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map((category) => (
+            <TableRow key={category.id}>
+              <TableCell>{category.name}</TableCell>
+              <TableCell className="text-right">
+                {formatCurrency(category.budgeted_amount)}
+              </TableCell>
+              <TableCell className="text-right">
+                {formatCurrency(category.spent_amount)}
+              </TableCell>
+              <TableCell className="text-right">
+                {formatCurrency(category.budgeted_amount - category.spent_amount)}
+              </TableCell>
+              <TableCell className="text-right">
+                {formatCurrency(category.average_spend)}
+              </TableCell>
+            </TableRow>
+          ))}
+      </TableBody>
+    </Table>
+  );
+};

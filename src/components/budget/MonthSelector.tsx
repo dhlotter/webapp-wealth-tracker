@@ -1,7 +1,13 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { format, subMonths, addMonths } from "date-fns";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { format, parseISO } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface MonthSelectorProps {
   selectedMonth: Date;
@@ -9,25 +15,50 @@ interface MonthSelectorProps {
 }
 
 export const MonthSelector = ({ selectedMonth, onChange }: MonthSelectorProps) => {
+  const [availableMonths, setAvailableMonths] = useState<Date[]>([]);
+
+  useEffect(() => {
+    const fetchAvailableMonths = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("transactions")
+        .select("date")
+        .eq("user_id", user.id)
+        .order("date", { ascending: false });
+
+      if (data) {
+        const uniqueMonths = Array.from(
+          new Set(
+            data.map((t) => format(new Date(t.date), "yyyy-MM"))
+          )
+        ).map((dateStr) => parseISO(`${dateStr}-01`));
+
+        setAvailableMonths(uniqueMonths);
+      }
+    };
+
+    fetchAvailableMonths();
+  }, []);
+
   return (
-    <div className="flex items-center justify-center gap-4 mb-6">
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={() => onChange(subMonths(selectedMonth, 1))}
+    <div className="w-[200px] mx-auto mb-6">
+      <Select
+        value={format(selectedMonth, "yyyy-MM")}
+        onValueChange={(value) => onChange(parseISO(`${value}-01`))}
       >
-        <ChevronLeft className="h-4 w-4" />
-      </Button>
-      <span className="text-lg font-medium">
-        {format(selectedMonth, "MMMM yyyy")}
-      </span>
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={() => onChange(addMonths(selectedMonth, 1))}
-      >
-        <ChevronRight className="h-4 w-4" />
-      </Button>
+        <SelectTrigger>
+          <SelectValue placeholder="Select month" />
+        </SelectTrigger>
+        <SelectContent>
+          {availableMonths.map((date) => (
+            <SelectItem key={format(date, "yyyy-MM")} value={format(date, "yyyy-MM")}>
+              {format(date, "MMMM yyyy")}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 };
