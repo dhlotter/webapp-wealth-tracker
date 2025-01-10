@@ -23,6 +23,10 @@ export const BudgetGroup = ({
   groupTotals, 
   averageMonths 
 }: BudgetGroupProps) => {
+  const progressValue = groupTotals.budgeted > 0 
+    ? (groupTotals.spent / groupTotals.budgeted) * 100 
+    : 0;
+
   return (
     <AccordionItem value={group} className="border rounded-lg p-4">
       <AccordionTrigger className="hover:no-underline">
@@ -34,7 +38,7 @@ export const BudgetGroup = ({
             </span>
           </div>
           <Progress 
-            value={(groupTotals.spent / groupTotals.budgeted) * 100} 
+            value={progressValue} 
             className="h-2" 
           />
         </div>
