@@ -52,7 +52,7 @@ const Budget = () => {
         onChange={setSelectedMonth}
       />
 
-      <Accordion type="multiple" collapsible className="space-y-4">
+      <Accordion type="multiple" className="space-y-4">
         {Object.entries(groupedCategories).map(([group, categories]) => (
           <BudgetGroup
             key={group}
