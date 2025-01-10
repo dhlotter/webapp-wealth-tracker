@@ -35,9 +35,9 @@ export const SpendingGroupsSheet = () => {
     setEditingName("");
   };
 
-  const saveEditing = async (id: string) => {
+  const saveEditing = (id: string) => {
     if (editingName.trim()) {
-      await updateSpendingGroup(id, editingName.trim());
+      updateSpendingGroup(id, editingName.trim());
       setEditingId(null);
       setEditingName("");
     }

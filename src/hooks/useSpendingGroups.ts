@@ -49,8 +49,13 @@ export const useSpendingGroups = () => {
     },
   });
 
+  type UpdateSpendingGroupParams = {
+    id: string;
+    name: string;
+  };
+
   const updateMutation = useMutation({
-    mutationFn: async (id: string, name: string) => {
+    mutationFn: async ({ id, name }: UpdateSpendingGroupParams) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error("Please log in to update spending groups");
@@ -102,7 +107,8 @@ export const useSpendingGroups = () => {
   return {
     ...query,
     createSpendingGroup: createMutation.mutate,
-    updateSpendingGroup: updateMutation.mutate,
+    updateSpendingGroup: (id: string, name: string) => 
+      updateMutation.mutate({ id, name }),
     deleteSpendingGroup: deleteMutation.mutate,
   };
 };
