@@ -49,6 +49,31 @@ export const useSpendingGroups = () => {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: async (id: string, name: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Please log in to update spending groups");
+        throw new Error("User not authenticated");
+      }
+
+      const { error } = await supabase
+        .from("spending_groups")
+        .update({ name })
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["spending-groups"] });
+      toast.success("Spending group updated successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to update spending group");
+      console.error("Error updating spending group:", error);
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -77,6 +102,7 @@ export const useSpendingGroups = () => {
   return {
     ...query,
     createSpendingGroup: createMutation.mutate,
+    updateSpendingGroup: updateMutation.mutate,
     deleteSpendingGroup: deleteMutation.mutate,
   };
 };
