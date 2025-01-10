@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfMonth, endOfMonth } from "date-fns";
 
@@ -49,7 +49,7 @@ export const useBudgetCategories = (month: Date, averageMonths: number = 3) => {
       if (transactionsError) throw transactionsError;
 
       // Get transactions for average calculation
-      const averageStartDate = startOfMonth(new Date(startDate));
+      const averageStartDate = new Date(startDate);
       averageStartDate.setMonth(averageStartDate.getMonth() - averageMonths);
 
       const { data: historicalTransactions, error: historicalError } = await supabase
@@ -62,29 +62,29 @@ export const useBudgetCategories = (month: Date, averageMonths: number = 3) => {
       if (historicalError) throw historicalError;
 
       // Calculate spent amounts
-      const spentAmounts = transactions.reduce((acc: { [key: string]: number }, tx) => {
+      const spentAmounts = transactions?.reduce((acc: { [key: string]: number }, tx) => {
         acc[tx.category] = (acc[tx.category] || 0) + tx.amount;
         return acc;
-      }, {});
+      }, {}) || {};
 
       // Calculate averages
-      const averages = historicalTransactions.reduce((acc: { [key: string]: { total: number, months: Set<string> } }, tx) => {
+      const averages = historicalTransactions?.reduce((acc: { [key: string]: { total: number, months: Set<string> } }, tx) => {
         if (!acc[tx.category]) {
           acc[tx.category] = { total: 0, months: new Set() };
         }
         acc[tx.category].total += tx.amount;
         acc[tx.category].months.add(new Date(tx.date).toISOString().substring(0, 7));
         return acc;
-      }, {});
+      }, {}) || {};
 
-      return categories.map((category) => ({
+      return categories?.map((category) => ({
         ...category,
         budgeted_amount: monthlyBudgets?.find(b => b.category_id === category.id)?.budgeted_amount || 0,
         spent_amount: spentAmounts[category.name] || 0,
         average_spend: averages[category.name] 
           ? averages[category.name].total / averages[category.name].months.size 
           : 0
-      }));
+      })) || [];
     },
   });
 };
