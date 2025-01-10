@@ -9,6 +9,9 @@ export const useSpendingGroups = () => {
   const query = useQuery({
     queryKey: ["spending-groups"],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
       const { data, error } = await supabase
         .from("spending_groups")
         .select("*")
@@ -22,7 +25,10 @@ export const useSpendingGroups = () => {
   const createMutation = useMutation({
     mutationFn: async (name: string) => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not authenticated");
+      if (!user) {
+        toast.error("Please log in to create spending groups");
+        throw new Error("User not authenticated");
+      }
 
       const { error } = await supabase
         .from("spending_groups")
@@ -45,6 +51,12 @@ export const useSpendingGroups = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Please log in to delete spending groups");
+        throw new Error("User not authenticated");
+      }
+
       const { error } = await supabase
         .from("spending_groups")
         .delete()
