@@ -19,10 +19,15 @@ export const BudgetCategoryList = ({
   averageMonths,
   selectedMonth
 }: BudgetCategoryListProps) => {
-  if (categories.length === 0) {
+  // Filter categories to only show those with transactions or budgeted amounts
+  const categoriesWithActivity = categories.filter(
+    category => category.spent_amount > 0 || category.budgeted_amount > 0
+  );
+
+  if (categoriesWithActivity.length === 0) {
     return (
       <div className="text-center text-muted-foreground py-4">
-        No transactions in this group for {selectedMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
+        No transactions or budgets in this group for {selectedMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
       </div>
     );
   }
@@ -39,7 +44,7 @@ export const BudgetCategoryList = ({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {categories
+        {categoriesWithActivity
           .sort((a, b) => a.name.localeCompare(b.name))
           .map((category) => (
             <TableRow key={category.id}>

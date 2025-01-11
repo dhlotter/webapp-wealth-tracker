@@ -29,11 +29,6 @@ export const BudgetGroup = ({
     ? (groupTotals.spent / groupTotals.budgeted) * 100 
     : 0;
 
-  // Filter categories to only show those with transactions
-  const categoriesWithTransactions = categories.filter(
-    category => category.spent_amount > 0
-  );
-
   return (
     <AccordionItem value={group} className="border rounded-lg p-4">
       <AccordionTrigger className="hover:no-underline">
@@ -52,7 +47,7 @@ export const BudgetGroup = ({
       </AccordionTrigger>
       <AccordionContent className="pt-4">
         <BudgetCategoryList 
-          categories={categoriesWithTransactions}
+          categories={categories}
           averageMonths={averageMonths}
           selectedMonth={selectedMonth}
         />
