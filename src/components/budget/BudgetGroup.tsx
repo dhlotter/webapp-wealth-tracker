@@ -15,17 +15,24 @@ interface BudgetGroupProps {
     spent: number;
   };
   averageMonths: number;
+  selectedMonth: Date;
 }
 
 export const BudgetGroup = ({ 
   group, 
   categories, 
   groupTotals, 
-  averageMonths 
+  averageMonths,
+  selectedMonth
 }: BudgetGroupProps) => {
   const progressValue = groupTotals.budgeted > 0 
     ? (groupTotals.spent / groupTotals.budgeted) * 100 
     : 0;
+
+  // Filter categories to only show those with transactions
+  const categoriesWithTransactions = categories.filter(
+    category => category.spent_amount > 0
+  );
 
   return (
     <AccordionItem value={group} className="border rounded-lg p-4">
@@ -45,8 +52,9 @@ export const BudgetGroup = ({
       </AccordionTrigger>
       <AccordionContent className="pt-4">
         <BudgetCategoryList 
-          categories={categories} 
-          averageMonths={averageMonths} 
+          categories={categoriesWithTransactions}
+          averageMonths={averageMonths}
+          selectedMonth={selectedMonth}
         />
       </AccordionContent>
     </AccordionItem>

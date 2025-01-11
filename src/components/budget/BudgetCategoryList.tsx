@@ -11,12 +11,22 @@ import { formatCurrency } from "@/lib/utils/formatCurrency";
 interface BudgetCategoryListProps {
   categories: any[];
   averageMonths: number;
+  selectedMonth: Date;
 }
 
 export const BudgetCategoryList = ({ 
-  categories, 
-  averageMonths 
+  categories,
+  averageMonths,
+  selectedMonth
 }: BudgetCategoryListProps) => {
+  if (categories.length === 0) {
+    return (
+      <div className="text-center text-muted-foreground py-4">
+        No transactions in this group for {selectedMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
+      </div>
+    );
+  }
+
   return (
     <Table>
       <TableHeader>

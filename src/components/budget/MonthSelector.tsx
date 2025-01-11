@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { format, parseISO } from "date-fns";
-import { supabase } from "@/integrations/supabase/client";
+import { format, parseISO, subMonths, startOfMonth } from "date-fns";
 import {
   Select,
   SelectContent,
@@ -18,28 +17,14 @@ export const MonthSelector = ({ selectedMonth, onChange }: MonthSelectorProps) =
   const [availableMonths, setAvailableMonths] = useState<Date[]>([]);
 
   useEffect(() => {
-    const fetchAvailableMonths = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data } = await supabase
-        .from("transactions")
-        .select("date")
-        .eq("user_id", user.id)
-        .order("date", { ascending: false });
-
-      if (data) {
-        const uniqueMonths = Array.from(
-          new Set(
-            data.map((t) => format(new Date(t.date), "yyyy-MM"))
-          )
-        ).map((dateStr) => parseISO(`${dateStr}-01`));
-
-        setAvailableMonths(uniqueMonths);
-      }
-    };
-
-    fetchAvailableMonths();
+    const months: Date[] = [];
+    const currentDate = startOfMonth(new Date());
+    
+    for (let i = 0; i < 12; i++) {
+      months.push(subMonths(currentDate, i));
+    }
+    
+    setAvailableMonths(months);
   }, []);
 
   return (

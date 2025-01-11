@@ -60,6 +60,7 @@ const Budget = () => {
             categories={categories}
             groupTotals={groupTotals[group]}
             averageMonths={settings?.average_months || 3}
+            selectedMonth={selectedMonth}
           />
         ))}
       </Accordion>
