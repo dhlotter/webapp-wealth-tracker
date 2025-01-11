@@ -4,15 +4,17 @@ import { MonthSelector } from "@/components/budget/MonthSelector";
 import { BudgetGroup } from "@/components/budget/BudgetGroup";
 import { useBudgetCategories } from "@/hooks/useBudgetCategories";
 import { useSettings } from "@/hooks/useSettings";
+import { useSpendingGroups } from "@/hooks/useSpendingGroups";
 import { Accordion } from "@/components/ui/accordion";
 
 const Budget = () => {
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   const { data: settings } = useSettings();
-  const { data: categories = [], isLoading } = useBudgetCategories(
+  const { data: categories = [], isLoading: categoriesLoading } = useBudgetCategories(
     selectedMonth,
     settings?.average_months || 3
   );
+  const { data: spendingGroups = [], isLoading: groupsLoading } = useSpendingGroups();
 
   // Group categories by spending group
   const groupedCategories = categories.reduce((acc: { [key: string]: typeof categories }, category) => {
@@ -35,7 +37,7 @@ const Budget = () => {
     return acc;
   }, {});
 
-  if (isLoading) {
+  if (categoriesLoading || groupsLoading) {
     return (
       <PageLayout title="Budget">
         <div className="flex items-center justify-center h-[200px]">
@@ -45,6 +47,13 @@ const Budget = () => {
     );
   }
 
+  // Ensure we have a budget group section for every spending group, even if there are no transactions
+  const allGroups = spendingGroups.map(group => ({
+    name: group.name,
+    categories: groupedCategories[group.name] || [],
+    totals: groupTotals[group.name] || { budgeted: 0, spent: 0 }
+  }));
+
   return (
     <PageLayout title="Budget">
       <MonthSelector
@@ -53,12 +62,12 @@ const Budget = () => {
       />
 
       <Accordion type="multiple" className="space-y-4">
-        {Object.entries(groupedCategories).map(([group, categories]) => (
+        {allGroups.map(({ name, categories, totals }) => (
           <BudgetGroup
-            key={group}
-            group={group}
+            key={name}
+            group={name}
             categories={categories}
-            groupTotals={groupTotals[group]}
+            groupTotals={totals}
             averageMonths={settings?.average_months || 3}
             selectedMonth={selectedMonth}
           />
