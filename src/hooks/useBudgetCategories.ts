@@ -77,6 +77,7 @@ export const useBudgetCategories = (month: Date, averageMonths: number = 3) => {
         return acc;
       }, {}) || {};
 
+      // Map categories with spent amounts and averages
       return categories?.map((category) => ({
         ...category,
         budgeted_amount: monthlyBudgets?.find(b => b.category_id === category.id)?.budgeted_amount || 0,
