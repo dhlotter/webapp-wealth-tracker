@@ -9,6 +9,9 @@ interface BudgetCategory {
   budgeted_amount: number;
   spent_amount: number;
   average_spend: number;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
 }
 
 export const useBudgetCategories = (month: Date, averageMonths: number = 3) => {
@@ -91,6 +94,8 @@ export const useBudgetCategories = (month: Date, averageMonths: number = 3) => {
       const transactionCategories = new Set(transactions?.map(tx => tx.category) || []);
       const existingCategories = new Set(categories?.map(cat => cat.name) || []);
 
+      const now = new Date().toISOString();
+
       transactions?.forEach(tx => {
         if (!existingCategories.has(tx.category)) {
           categoriesWithAmounts.push({
@@ -101,7 +106,10 @@ export const useBudgetCategories = (month: Date, averageMonths: number = 3) => {
             spent_amount: spentAmounts[tx.category] || 0,
             average_spend: averages[tx.category] 
               ? averages[tx.category].total / averages[tx.category].months.size 
-              : 0
+              : 0,
+            created_at: now,
+            updated_at: now,
+            user_id: user.id
           });
         }
       });
