@@ -41,7 +41,7 @@ export const useBudgetCategories = (month: Date, averageMonths: number = 3) => {
       // Get transactions for the current month
       const { data: transactions, error: transactionsError } = await supabase
         .from("transactions")
-        .select("category, amount")
+        .select("category, amount, spending_group")
         .eq("user_id", user.id)
         .gte("date", startDate.toISOString())
         .lte("date", endDate.toISOString());
@@ -61,7 +61,7 @@ export const useBudgetCategories = (month: Date, averageMonths: number = 3) => {
 
       if (historicalError) throw historicalError;
 
-      // Calculate spent amounts
+      // Calculate spent amounts by category
       const spentAmounts = transactions?.reduce((acc: { [key: string]: number }, tx) => {
         acc[tx.category] = (acc[tx.category] || 0) + tx.amount;
         return acc;
@@ -78,7 +78,7 @@ export const useBudgetCategories = (month: Date, averageMonths: number = 3) => {
       }, {}) || {};
 
       // Map categories with spent amounts and averages
-      return categories?.map((category) => ({
+      const categoriesWithAmounts = categories?.map((category) => ({
         ...category,
         budgeted_amount: monthlyBudgets?.find(b => b.category_id === category.id)?.budgeted_amount || 0,
         spent_amount: spentAmounts[category.name] || 0,
@@ -86,6 +86,27 @@ export const useBudgetCategories = (month: Date, averageMonths: number = 3) => {
           ? averages[category.name].total / averages[category.name].months.size 
           : 0
       })) || [];
+
+      // Add categories from transactions that don't exist in budget_categories
+      const transactionCategories = new Set(transactions?.map(tx => tx.category) || []);
+      const existingCategories = new Set(categories?.map(cat => cat.name) || []);
+
+      transactions?.forEach(tx => {
+        if (!existingCategories.has(tx.category)) {
+          categoriesWithAmounts.push({
+            id: `temp-${tx.category}`,
+            name: tx.category,
+            spending_group: tx.spending_group,
+            budgeted_amount: 0,
+            spent_amount: spentAmounts[tx.category] || 0,
+            average_spend: averages[tx.category] 
+              ? averages[tx.category].total / averages[tx.category].months.size 
+              : 0
+          });
+        }
+      });
+
+      return categoriesWithAmounts;
     },
   });
 };
