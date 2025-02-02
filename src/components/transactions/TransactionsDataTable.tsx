@@ -59,9 +59,9 @@ export function TransactionsDataTable({
     }
   }, [searchQuery])
 
-  const getSortIcon = (isSorted: boolean, sortDirection?: string) => {
+  const getSortIcon = (isSorted: boolean | string) => {
     if (!isSorted) return <ArrowUpDown className="ml-2 h-4 w-4" />
-    return sortDirection === "asc" ? (
+    return isSorted === "asc" ? (
       <ChevronUp className="ml-2 h-4 w-4" />
     ) : (
       <ChevronDown className="ml-2 h-4 w-4" />
@@ -104,7 +104,7 @@ export function TransactionsDataTable({
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
             Date
-            {getSortIcon(column.getIsSorted() !== false, column.getIsSorted())}
+            {getSortIcon(column.getIsSorted())}
           </div>
         )
       },
@@ -119,7 +119,7 @@ export function TransactionsDataTable({
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
             Account
-            {getSortIcon(column.getIsSorted() !== false, column.getIsSorted())}
+            {getSortIcon(column.getIsSorted())}
           </div>
         )
       },
@@ -133,7 +133,7 @@ export function TransactionsDataTable({
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
             Merchant
-            {getSortIcon(column.getIsSorted() !== false, column.getIsSorted())}
+            {getSortIcon(column.getIsSorted())}
           </div>
         )
       },
@@ -147,7 +147,7 @@ export function TransactionsDataTable({
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
             Category
-            {getSortIcon(column.getIsSorted() !== false, column.getIsSorted())}
+            {getSortIcon(column.getIsSorted())}
           </div>
         )
       },
@@ -162,7 +162,7 @@ export function TransactionsDataTable({
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
             Amount
-            {getSortIcon(column.getIsSorted() !== false, column.getIsSorted())}
+            {getSortIcon(column.getIsSorted())}
           </div>
         )
       },
