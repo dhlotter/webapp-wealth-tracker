@@ -10,7 +10,7 @@ import {
 import { X, SlidersHorizontal } from "lucide-react";
 import { QuickFilters } from "@/components/transactions/QuickFilters";
 import { SearchBar } from "@/components/transactions/SearchBar";
-import { TransactionsTable } from "@/components/transactions/TransactionsTable";
+import { TransactionsDataTable } from "@/components/transactions/TransactionsDataTable";
 import { useTransactions } from "@/hooks/useTransactions";
 import { Transaction, QuickFilter } from "@/types/transactions";
 import { AdvancedSearch } from "@/components/transactions/AdvancedSearch";
@@ -23,20 +23,9 @@ const Transactions = () => {
   const [isAdvancedSearchOpen, setIsAdvancedSearchOpen] = useState(false);
   const [quickFilter, setQuickFilter] = useState<QuickFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortKey, setSortKey] = useState<keyof Transaction>("date");
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [advancedFilters, setAdvancedFilters] = useState<any>(null);
 
   const { data: transactions = [], isLoading, error } = useTransactions();
-
-  const handleSort = (key: keyof Transaction) => {
-    if (sortKey === key) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortKey(key);
-      setSortDirection('asc');
-    }
-  };
 
   const filteredTransactions = transactions.filter(transaction => {
     // Quick filters
@@ -59,7 +48,7 @@ const Transactions = () => {
       if (advancedFilters.toDate && new Date(transaction.date) > endOfDay(advancedFilters.toDate)) {
         return false;
       }
-      if (advancedFilters.accountId && transaction.account_id !== advancedFilters.accountId) {
+      if (advancedFilters.accountIds?.length > 0 && !advancedFilters.accountIds.includes(transaction.account_id)) {
         return false;
       }
       if (advancedFilters.amountMin && transaction.amount < advancedFilters.amountMin) {
@@ -68,7 +57,10 @@ const Transactions = () => {
       if (advancedFilters.amountMax && transaction.amount > advancedFilters.amountMax) {
         return false;
       }
-      if (advancedFilters.spendingGroup && transaction.spending_group !== advancedFilters.spendingGroup) {
+      if (advancedFilters.spendingGroups?.length > 0 && !advancedFilters.spendingGroups.includes(transaction.spending_group)) {
+        return false;
+      }
+      if (advancedFilters.categories?.length > 0 && !advancedFilters.categories.includes(transaction.category)) {
         return false;
       }
     }
@@ -87,17 +79,6 @@ const Transactions = () => {
     }
 
     return true;
-  }).sort((a, b) => {
-    if (sortKey === 'date') {
-      return sortDirection === 'asc' 
-        ? new Date(a.date).getTime() - new Date(b.date).getTime()
-        : new Date(b.date).getTime() - new Date(a.date).getTime();
-    }
-    const aValue = a[sortKey];
-    const bValue = b[sortKey];
-    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-    return 0;
   });
 
   if (isLoading) {
@@ -142,15 +123,12 @@ const Transactions = () => {
         </Button>
       </div>
 
-      <TransactionsTable
-        transactions={filteredTransactions}
+      <TransactionsDataTable
+        data={filteredTransactions}
         onTransactionClick={(transaction) => {
           setSelectedTransaction(transaction);
           setIsEditSheetOpen(true);
         }}
-        onSort={handleSort}
-        sortKey={sortKey}
-        sortDirection={sortDirection}
       />
 
       {selectedTransaction && (
