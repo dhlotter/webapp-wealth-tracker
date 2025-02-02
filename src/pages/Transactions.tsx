@@ -65,19 +65,6 @@ const Transactions = () => {
       }
     }
 
-    // Search query
-    if (searchQuery) {
-      const searchLower = searchQuery.toLowerCase();
-      return (
-        transaction.merchant.toLowerCase().includes(searchLower) ||
-        transaction.description?.toLowerCase().includes(searchLower) ||
-        transaction.spending_group.toLowerCase().includes(searchLower) ||
-        transaction.category.toLowerCase().includes(searchLower) ||
-        transaction.amount.toString().includes(searchLower) ||
-        transaction.notes?.toLowerCase().includes(searchLower)
-      );
-    }
-
     return true;
   });
 
@@ -125,6 +112,7 @@ const Transactions = () => {
 
       <TransactionsDataTable
         data={filteredTransactions}
+        searchQuery={searchQuery}
         onTransactionClick={(transaction) => {
           setSelectedTransaction(transaction);
           setIsEditSheetOpen(true);
