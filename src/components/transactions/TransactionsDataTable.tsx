@@ -2,9 +2,8 @@
 
 import * as React from "react"
 import {
-  ColumnDef,
-  ColumnFiltersState,
   SortingState,
+  ColumnFiltersState,
   VisibilityState,
   flexRender,
   getCoreRowModel,
@@ -21,28 +20,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Button } from "@/components/ui/button"
-import { Transaction } from "@/types/transactions"
-import { format } from "date-fns"
-import { useSettings } from "@/hooks/useSettings"
-import { formatCurrency } from "@/lib/utils/formatCurrency"
-import { ArrowUpDown, ChevronDown, ChevronUp, Eye, EyeOff } from "lucide-react"
+import { ArrowUpDown, ChevronDown, ChevronUp } from "lucide-react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
-import { toast } from "sonner"
-
-interface TransactionsDataTableProps {
-  data: Transaction[]
-  onTransactionClick?: (transaction: Transaction) => void;
-  searchQuery?: string;
-}
+import { useSettings } from "@/hooks/useSettings"
+import { BulkActionBar } from "./BulkActionBar"
+import { getTableColumns } from "./TableColumns"
+import { TransactionTableProps } from "./types"
 
 export function TransactionsDataTable({
   data,
   onTransactionClick,
   searchQuery = "",
-}: TransactionsDataTableProps) {
+}: TransactionTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
@@ -50,7 +40,6 @@ export function TransactionsDataTable({
   const { data: settings } = useSettings()
   const queryClient = useQueryClient()
 
-  // Update column filters when search query changes
   React.useEffect(() => {
     if (searchQuery) {
       setColumnFilters([
@@ -73,147 +62,7 @@ export function TransactionsDataTable({
     )
   }
 
-  const toggleSeenMutation = useMutation({
-    mutationFn: async ({ ids, seen }: { ids: string[], seen: boolean }) => {
-      const { error } = await supabase
-        .from("transactions")
-        .update({ seen })
-        .in('id', ids)
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      toast.success("Transaction status updated");
-      setRowSelection({});
-    },
-    onError: (error) => {
-      toast.error("Failed to update transaction status");
-      console.error("Error updating transaction status:", error);
-    },
-  });
-
-  const handleToggleSeen = () => {
-    const selectedIds = Object.keys(rowSelection).map(
-      (index) => data[parseInt(index)].id
-    );
-    
-    // Check if any of the selected transactions are unseen
-    const hasUnseenTransactions = selectedIds.some(
-      (id) => !data.find((t) => t.id === id)?.seen
-    );
-    
-    toggleSeenMutation.mutate({
-      ids: selectedIds,
-      seen: hasUnseenTransactions,
-    });
-  };
-
-  const columns: ColumnDef<Transaction>[] = [
-    {
-      id: "select",
-      header: ({ table }) => (
-        <div className="h-[42px] flex items-center">
-          <Checkbox
-            checked={
-              table.getIsAllPageRowsSelected() ||
-              (table.getIsSomePageRowsSelected() ? "indeterminate" : false)
-            }
-            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-            aria-label="Select all"
-          />
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="h-[42px] flex items-center">
-          <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
-            aria-label="Select row"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
-      ),
-      enableSorting: false,
-    },
-    {
-      accessorKey: "date",
-      header: ({ column }) => {
-        return (
-          <div
-            className="flex items-center cursor-pointer"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Date
-            {getSortIcon(column.getIsSorted())}
-          </div>
-        )
-      },
-      cell: ({ row }) => format(new Date(row.getValue("date")), settings?.date_format || "MMM d, yyyy"),
-    },
-    {
-      accessorKey: "accounts.name",
-      header: ({ column }) => {
-        return (
-          <div
-            className="flex items-center cursor-pointer"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Account
-            {getSortIcon(column.getIsSorted())}
-          </div>
-        )
-      },
-    },
-    {
-      accessorKey: "merchant",
-      header: ({ column }) => {
-        return (
-          <div
-            className="flex items-center cursor-pointer"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Merchant
-            {getSortIcon(column.getIsSorted())}
-          </div>
-        )
-      },
-    },
-    {
-      accessorKey: "category",
-      header: ({ column }) => {
-        return (
-          <div
-            className="flex items-center cursor-pointer"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Category
-            {getSortIcon(column.getIsSorted())}
-          </div>
-        )
-      },
-      cell: ({ row }) => `${row.original.spending_group} - ${row.original.category}`,
-    },
-    {
-      accessorKey: "amount",
-      header: ({ column }) => {
-        return (
-          <div
-            className="flex items-center justify-end cursor-pointer"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Amount
-            {getSortIcon(column.getIsSorted())}
-          </div>
-        )
-      },
-      cell: ({ row }) => (
-        <div className="text-right font-medium">
-          {formatCurrency(row.getValue("amount"), row.original.accounts?.currency)}
-        </div>
-      ),
-    },
-  ]
+  const columns = getTableColumns({ settings, getSortIcon })
 
   const table = useReactTable({
     data,
@@ -239,58 +88,39 @@ export function TransactionsDataTable({
       const { error } = await supabase
         .from("transactions")
         .update({ seen: true })
-        .eq("id", transactionId);
+        .eq("id", transactionId)
 
-      if (error) throw error;
+      if (error) throw error
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] })
     },
-  });
+  })
 
   return (
     <div className="space-y-4">
       {Object.keys(rowSelection).length > 0 && (
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleToggleSeen}
-            className="flex items-center gap-2"
-          >
-            {Object.keys(rowSelection).some(
-              (index) => !data[parseInt(index)]?.seen
-            ) ? (
-              <>
-                <Eye className="h-4 w-4" />
-                Mark as Seen
-              </>
-            ) : (
-              <>
-                <EyeOff className="h-4 w-4" />
-                Mark as Unseen
-              </>
-            )}
-          </Button>
-        </div>
+        <BulkActionBar
+          rowSelection={rowSelection}
+          data={data}
+          onClearSelection={() => setRowSelection({})}
+        />
       )}
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  )
-                })}
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                  </TableHead>
+                ))}
               </TableRow>
             ))}
           </TableHeader>
@@ -305,8 +135,8 @@ export function TransactionsDataTable({
                   }`}
                   onClick={() => {
                     if (onTransactionClick) {
-                      markAsSeen.mutate(row.original.id);
-                      onTransactionClick(row.original);
+                      markAsSeen.mutate(row.original.id)
+                      onTransactionClick(row.original)
                     }
                   }}
                 >
