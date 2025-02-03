@@ -27,6 +27,7 @@ import { useSettings } from "@/hooks/useSettings"
 import { BulkActionBar } from "./BulkActionBar"
 import { getTableColumns } from "./TableColumns"
 import { TransactionTableProps } from "./types"
+import { format } from "date-fns"
 
 export function TransactionsDataTable({
   data,
@@ -40,18 +41,33 @@ export function TransactionsDataTable({
   const { data: settings } = useSettings()
   const queryClient = useQueryClient()
 
+  // Custom filter function for all columns
+  const globalFilter = React.useCallback(
+    (row: any) => {
+      if (!searchQuery) return true
+
+      const searchLower = searchQuery.toLowerCase()
+      const dateStr = format(new Date(row.date), settings?.date_format || "MMM d, yyyy")
+      const amountStr = row.amount.toString()
+      
+      // Check all relevant fields
+      return (
+        dateStr.toLowerCase().includes(searchLower) ||
+        (row.accounts?.name || "").toLowerCase().includes(searchLower) ||
+        (row.merchant || "").toLowerCase().includes(searchLower) ||
+        (row.category || "").toLowerCase().includes(searchLower) ||
+        (row.spending_group || "").toLowerCase().includes(searchLower) ||
+        amountStr.includes(searchLower)
+      )
+    },
+    [searchQuery, settings?.date_format]
+  )
+
   React.useEffect(() => {
-    if (searchQuery) {
-      setColumnFilters([
-        {
-          id: "merchant",
-          value: searchQuery,
-        },
-      ])
-    } else {
-      setColumnFilters([])
-    }
-  }, [searchQuery])
+    // Apply the global filter when search query changes
+    const filtered = data.filter(globalFilter)
+    table.setData(filtered)
+  }, [searchQuery, data, globalFilter])
 
   const getSortIcon = (isSorted: boolean | string) => {
     if (!isSorted) return <ArrowUpDown className="ml-2 h-4 w-4" />
