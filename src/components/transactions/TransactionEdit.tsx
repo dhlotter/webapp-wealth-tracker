@@ -12,6 +12,7 @@ import { useSettings } from "@/hooks/useSettings";
 import { useSpendingGroups } from "@/hooks/useSpendingGroups";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { format } from "date-fns";
 
 interface TransactionEditProps {
   transaction: Transaction;
@@ -74,6 +75,16 @@ export const TransactionEdit = ({ transaction, onClose }: TransactionEditProps) 
     <div className="flex flex-col h-full">
       <ScrollArea className="flex-1 p-[2mm]">
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="date">Date</Label>
+            <Input
+              id="date"
+              value={format(new Date(transaction.date), settings?.date_format || "MMM d, yyyy")}
+              disabled
+              className="bg-muted"
+            />
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="account">Account</Label>
             <Input

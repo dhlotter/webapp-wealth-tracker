@@ -10,7 +10,14 @@ export const useTransactions = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("transactions")
-        .select("*, accounts(currency)")
+        .select(`
+          *,
+          accounts (
+            name,
+            currency,
+            type
+          )
+        `)
         .order("date", { ascending: false });
 
       if (error) throw error;

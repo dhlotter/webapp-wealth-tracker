@@ -49,6 +49,7 @@ export function BulkActionBar({ rowSelection, data, onClearSelection }: BulkActi
         variant="outline"
         size="sm"
         onClick={handleToggleSeen}
+        disabled={Object.keys(rowSelection).length === 0}
         className="flex items-center gap-2"
       >
         {Object.keys(rowSelection).some(
