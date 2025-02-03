@@ -1,54 +1,94 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+"use client";
+
+import {
+  ColumnDef,
+  SortingState,
+  flexRender,
+  getCoreRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Account } from "@/types/accounts";
-import { formatCurrency } from "@/lib/utils/formatCurrency";
-import { format } from "date-fns";
-import { useSettings } from "@/hooks/useSettings";
+import { useAccountColumns } from "./AccountsTableColumns";
+import { useState } from "react";
 
 interface AccountsTableProps {
   accounts: Account[];
   onAccountClick?: (account: Account) => void;
-  onSort?: (key: keyof Account) => void;
 }
 
-export const AccountsTable = ({ accounts, onAccountClick, onSort }: AccountsTableProps) => {
-  const { data: settings } = useSettings();
-  
-  // Sort accounts by type first, then by name
-  const sortedAccounts = [...accounts].sort((a, b) => {
-    const typeComparison = a.type.localeCompare(b.type);
-    if (typeComparison !== 0) return typeComparison;
-    return a.name.localeCompare(b.name);
+export const AccountsTable = ({ accounts, onAccountClick }: AccountsTableProps) => {
+  const columns = useAccountColumns(onAccountClick);
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "type", desc: false }
+  ]);
+
+  const table = useReactTable({
+    data: accounts,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    onSortingChange: setSorting,
+    state: {
+      sorting,
+    },
   });
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead onClick={() => onSort?.('type')} className={onSort ? "cursor-pointer hover:bg-muted" : ""}>Type</TableHead>
-          <TableHead onClick={() => onSort?.('name')} className={onSort ? "cursor-pointer hover:bg-muted" : ""}>Name</TableHead>
-          <TableHead onClick={() => onSort?.('balance')} className={onSort ? "cursor-pointer hover:bg-muted text-right" : "text-right"}>Balance</TableHead>
-          <TableHead onClick={() => onSort?.('lastUpdated')} className={onSort ? "cursor-pointer hover:bg-muted" : ""}>Last Updated</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {sortedAccounts.map((account) => (
-          <TableRow 
-            key={account.id}
-            className={onAccountClick ? "cursor-pointer hover:bg-muted" : ""}
-            onClick={() => onAccountClick?.(account)}
-          >
-            <TableCell className="font-medium">{account.type}</TableCell>
-            <TableCell>{account.name}</TableCell>
-            <TableCell className="text-right">
-              {formatCurrency(account.balance, account.currency)}
-            </TableCell>
-            <TableCell>
-              {format(new Date(account.lastUpdated), settings?.date_format || "MMM d, yyyy")}
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id}>
+              {headerGroup.headers.map((header) => {
+                return (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                  </TableHead>
+                );
+              })}
+            </TableRow>
+          ))}
+        </TableHeader>
+        <TableBody>
+          {table.getRowModel().rows?.length ? (
+            table.getRowModel().rows.map((row) => (
+              <TableRow
+                key={row.id}
+                data-state={row.getIsSelected() && "selected"}
+                className={onAccountClick ? "cursor-pointer hover:bg-muted" : ""}
+                onClick={() => onAccountClick?.(row.original)}
+              >
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell key={cell.id}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={columns.length} className="h-24 text-center">
+                No accounts found.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </div>
   );
 };
 
