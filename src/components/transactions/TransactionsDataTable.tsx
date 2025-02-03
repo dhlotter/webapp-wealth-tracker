@@ -41,16 +41,15 @@ export function TransactionsDataTable({
   const { data: settings } = useSettings()
   const queryClient = useQueryClient()
 
-  // Custom filter function for all columns
-  const globalFilter = React.useCallback(
-    (row: any) => {
-      if (!searchQuery) return true
+  // Filter data based on search query
+  const filteredData = React.useMemo(() => {
+    if (!searchQuery) return data
 
-      const searchLower = searchQuery.toLowerCase()
+    const searchLower = searchQuery.toLowerCase()
+    return data.filter(row => {
       const dateStr = format(new Date(row.date), settings?.date_format || "MMM d, yyyy")
       const amountStr = row.amount.toString()
       
-      // Check all relevant fields
       return (
         dateStr.toLowerCase().includes(searchLower) ||
         (row.accounts?.name || "").toLowerCase().includes(searchLower) ||
@@ -59,15 +58,8 @@ export function TransactionsDataTable({
         (row.spending_group || "").toLowerCase().includes(searchLower) ||
         amountStr.includes(searchLower)
       )
-    },
-    [searchQuery, settings?.date_format]
-  )
-
-  React.useEffect(() => {
-    // Apply the global filter when search query changes
-    const filtered = data.filter(globalFilter)
-    table.setData(filtered)
-  }, [searchQuery, data, globalFilter])
+    })
+  }, [data, searchQuery, settings?.date_format])
 
   const getSortIcon = (isSorted: boolean | string) => {
     if (!isSorted) return <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -81,7 +73,7 @@ export function TransactionsDataTable({
   const columns = getTableColumns({ settings, getSortIcon })
 
   const table = useReactTable({
-    data,
+    data: filteredData,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -118,7 +110,7 @@ export function TransactionsDataTable({
       {Object.keys(rowSelection).length > 0 && (
         <BulkActionBar
           rowSelection={rowSelection}
-          data={data}
+          data={filteredData}
           onClearSelection={() => setRowSelection({})}
         />
       )}
