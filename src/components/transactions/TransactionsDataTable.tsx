@@ -22,11 +22,15 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Button } from "@/components/ui/button"
 import { Transaction } from "@/types/transactions"
 import { format } from "date-fns"
 import { useSettings } from "@/hooks/useSettings"
 import { formatCurrency } from "@/lib/utils/formatCurrency"
-import { ArrowUpDown, ChevronDown, ChevronUp } from "lucide-react"
+import { ArrowUpDown, ChevronDown, ChevronUp, Eye, EyeOff } from "lucide-react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { toast } from "sonner"
 
 interface TransactionsDataTableProps {
   data: Transaction[]
@@ -44,6 +48,7 @@ export function TransactionsDataTable({
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
   const { data: settings } = useSettings()
+  const queryClient = useQueryClient()
 
   // Update column filters when search query changes
   React.useEffect(() => {
@@ -67,6 +72,42 @@ export function TransactionsDataTable({
       <ChevronDown className="ml-2 h-4 w-4" />
     )
   }
+
+  const toggleSeenMutation = useMutation({
+    mutationFn: async ({ ids, seen }: { ids: string[], seen: boolean }) => {
+      const { error } = await supabase
+        .from("transactions")
+        .update({ seen })
+        .in('id', ids)
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      toast.success("Transaction status updated");
+      setRowSelection({});
+    },
+    onError: (error) => {
+      toast.error("Failed to update transaction status");
+      console.error("Error updating transaction status:", error);
+    },
+  });
+
+  const handleToggleSeen = () => {
+    const selectedIds = Object.keys(rowSelection).map(
+      (index) => data[parseInt(index)].id
+    );
+    
+    // Check if any of the selected transactions are unseen
+    const hasUnseenTransactions = selectedIds.some(
+      (id) => !data.find((t) => t.id === id)?.seen
+    );
+    
+    toggleSeenMutation.mutate({
+      ids: selectedIds,
+      seen: hasUnseenTransactions,
+    });
+  };
 
   const columns: ColumnDef<Transaction>[] = [
     {
@@ -193,52 +234,99 @@ export function TransactionsDataTable({
     },
   })
 
+  const markAsSeen = useMutation({
+    mutationFn: async (transactionId: string) => {
+      const { error } = await supabase
+        .from("transactions")
+        .update({ seen: true })
+        .eq("id", transactionId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    },
+  });
+
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => {
-                return (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </TableHead>
-                )
-              })}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {table.getRowModel().rows?.length ? (
-            table.getRowModel().rows.map((row) => (
-              <TableRow
-                key={row.id}
-                data-state={row.getIsSelected() && "selected"}
-                className={onTransactionClick ? "cursor-pointer hover:bg-muted" : ""}
-                onClick={() => onTransactionClick?.(row.original)}
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
+    <div className="space-y-4">
+      {Object.keys(rowSelection).length > 0 && (
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleToggleSeen}
+            className="flex items-center gap-2"
+          >
+            {Object.keys(rowSelection).some(
+              (index) => !data[parseInt(index)]?.seen
+            ) ? (
+              <>
+                <Eye className="h-4 w-4" />
+                Mark as Seen
+              </>
+            ) : (
+              <>
+                <EyeOff className="h-4 w-4" />
+                Mark as Unseen
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
+                  return (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  )
+                })}
               </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
-                No transactions found.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                  className={`${onTransactionClick ? "cursor-pointer hover:bg-muted" : ""} ${
+                    !row.original.seen ? "font-semibold" : ""
+                  }`}
+                  onClick={() => {
+                    if (onTransactionClick) {
+                      markAsSeen.mutate(row.original.id);
+                      onTransactionClick(row.original);
+                    }
+                  }}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-24 text-center">
+                  No transactions found.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   )
 }
