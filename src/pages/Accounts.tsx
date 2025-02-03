@@ -16,17 +16,8 @@ import { Account } from "@/types/accounts";
 import { fetchAccounts, createAccount, updateAccount } from "@/lib/api/accounts";
 import { toast } from "sonner";
 
-type SortConfig = {
-  key: keyof Account;
-  direction: "asc" | "desc";
-};
-
 const Accounts = () => {
   const queryClient = useQueryClient();
-  const [sortConfig, setSortConfig] = useState<SortConfig>({
-    key: "type",
-    direction: "asc",
-  });
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
@@ -34,14 +25,6 @@ const Accounts = () => {
   const { data: accounts = [], isLoading, error } = useQuery({
     queryKey: ["accounts"],
     queryFn: fetchAccounts,
-  });
-
-  const sortedAccounts = [...accounts].sort((a, b) => {
-    const compareResult = a[sortConfig.key] < b[sortConfig.key] ? -1 : 1;
-    if (sortConfig.key === "type" && a.type === b.type) {
-      return a.name < b.name ? -1 : 1;
-    }
-    return sortConfig.direction === "asc" ? compareResult : -compareResult;
   });
 
   const createMutation = useMutation({
@@ -70,14 +53,6 @@ const Accounts = () => {
       console.error("Error updating account:", error);
     },
   });
-
-  const handleSort = (key: keyof Account) => {
-    setSortConfig((current) => ({
-      key,
-      direction:
-        current.key === key && current.direction === "asc" ? "desc" : "asc",
-    }));
-  };
 
   const handleAddAccount = (newAccount: Partial<Account>) => {
     createMutation.mutate(newAccount);
@@ -131,8 +106,7 @@ const Accounts = () => {
       </div>
 
       <AccountsTable
-        accounts={sortedAccounts}
-        onSort={handleSort}
+        accounts={accounts}
         onAccountClick={(account) => {
           setSelectedAccount(account);
           setIsEditSheetOpen(true);
