@@ -52,7 +52,12 @@ export function BulkActionBar({ rowSelection, data, onClearSelection }: BulkActi
         disabled={Object.keys(rowSelection).length === 0}
         className="flex items-center gap-2"
       >
-        {Object.keys(rowSelection).some(
+        {Object.keys(rowSelection).length === 0 ? (
+          <>
+            <Eye className="h-4 w-4" />
+            Mark as Seen/Unseen
+          </>
+        ) : Object.keys(rowSelection).some(
           (index) => !data[parseInt(index)]?.seen
         ) ? (
           <>
