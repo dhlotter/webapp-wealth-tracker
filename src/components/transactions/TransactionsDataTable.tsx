@@ -41,7 +41,6 @@ export function TransactionsDataTable({
   const { data: settings } = useSettings()
   const queryClient = useQueryClient()
 
-  // Filter data based on search query
   const filteredData = React.useMemo(() => {
     if (!searchQuery) return data
 
@@ -107,13 +106,11 @@ export function TransactionsDataTable({
 
   return (
     <div className="space-y-4">
-      {Object.keys(rowSelection).length > 0 && (
-        <BulkActionBar
-          rowSelection={rowSelection}
-          data={filteredData}
-          onClearSelection={() => setRowSelection({})}
-        />
-      )}
+      <BulkActionBar
+        rowSelection={rowSelection}
+        data={filteredData}
+        onClearSelection={() => setRowSelection({})}
+      />
       <div className="rounded-md border">
         <Table>
           <TableHeader>
