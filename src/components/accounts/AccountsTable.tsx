@@ -27,8 +27,9 @@ interface AccountsTableProps {
 
 export const AccountsTable = ({ accounts, onAccountClick }: AccountsTableProps) => {
   const columns = useAccountColumns(onAccountClick);
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: "type", desc: false }
+  const [sorting] = useState<SortingState>([
+    { id: "type", desc: false },
+    { id: "name", desc: false }
   ]);
 
   const table = useReactTable({
@@ -36,7 +37,6 @@ export const AccountsTable = ({ accounts, onAccountClick }: AccountsTableProps) 
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    onSortingChange: setSorting,
     state: {
       sorting,
     },
