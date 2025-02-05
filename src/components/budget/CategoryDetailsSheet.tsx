@@ -36,6 +36,11 @@ export const CategoryDetailsSheet = ({
   const [showBudgetDialog, setShowBudgetDialog] = useState(false);
   const queryClient = useQueryClient();
 
+  // Reset budgeted amount when category changes
+  useState(() => {
+    setBudgetedAmount(category.budgeted_amount.toString());
+  }, [category.id, category.budgeted_amount]);
+
   const { data: chartData } = useQuery({
     queryKey: ["category-history", category.id, averageMonths],
     queryFn: async () => {
@@ -88,13 +93,16 @@ export const CategoryDetailsSheet = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      const amount = Number(budgetedAmount);
+      if (isNaN(amount)) throw new Error("Invalid amount");
+
       const { error } = await supabase
         .from("monthly_budgets")
         .upsert({
           user_id: user.id,
           category_id: category.id,
           month: startOfMonth(selectedMonth).toISOString(),
-          budgeted_amount: Number(budgetedAmount),
+          budgeted_amount: amount,
         });
 
       if (error) throw error;
@@ -117,20 +125,25 @@ export const CategoryDetailsSheet = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      const amount = Number(budgetedAmount);
+      if (isNaN(amount)) throw new Error("Invalid amount");
+
+      // Update the budget category
       const { error: categoryError } = await supabase
         .from("budget_categories")
-        .update({ budgeted_amount: Number(budgetedAmount) })
+        .update({ budgeted_amount: amount })
         .eq("id", category.id);
 
       if (categoryError) throw categoryError;
 
+      // Also update the current month's budget
       const { error: currentMonthError } = await supabase
         .from("monthly_budgets")
         .upsert({
           user_id: user.id,
           category_id: category.id,
           month: startOfMonth(selectedMonth).toISOString(),
-          budgeted_amount: Number(budgetedAmount),
+          budgeted_amount: amount,
         });
 
       if (currentMonthError) throw currentMonthError;
