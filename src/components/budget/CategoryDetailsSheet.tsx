@@ -1,26 +1,15 @@
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { formatCurrency } from "@/lib/utils/formatCurrency";
 import { Transaction } from "@/types/transactions";
 import { TransactionEdit } from "../transactions/TransactionEdit";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { BudgetChart } from "./BudgetChart";
+import { BudgetForm } from "./BudgetForm";
+import { TransactionsList } from "./TransactionsList";
+import { BudgetDialog } from "./BudgetDialog";
 
 interface CategoryDetailsSheetProps {
   isOpen: boolean;
@@ -184,63 +173,22 @@ export const CategoryDetailsSheet = ({
           </SheetHeader>
 
           <div className="space-y-6 py-6">
-            <div className="h-[200px] w-full">
-              <BarChart width={350} height={200} data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="total" fill="#3b82f6" />
-              </BarChart>
-            </div>
+            {chartData && <BudgetChart chartData={chartData} />}
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Budgeted Amount</label>
-              <div className="flex gap-2">
-                <Input
-                  type="number"
-                  value={budgetedAmount}
-                  onChange={(e) => setBudgetedAmount(e.target.value)}
-                />
-                <Button 
-                  onClick={handleSaveBudget}
-                  disabled={updateCurrentMonthBudget.isPending || updateFutureMonthsBudget.isPending}
-                >
-                  Save
-                </Button>
-              </div>
-            </div>
+            <BudgetForm
+              budgetedAmount={budgetedAmount}
+              onBudgetChange={setBudgetedAmount}
+              onSave={handleSaveBudget}
+              isLoading={updateCurrentMonthBudget.isPending || updateFutureMonthsBudget.isPending}
+            />
 
-            <div className="space-y-4">
-              {Object.entries(groupedTransactions).map(([month, monthTransactions]) => (
-                <div key={month}>
-                  <Separator className="my-2" />
-                  <h3 className="font-semibold mb-2">{month}</h3>
-                  <div className="space-y-2">
-                    {monthTransactions.map((transaction) => (
-                      <div 
-                        key={transaction.id} 
-                        className="flex justify-between items-center cursor-pointer hover:bg-muted/50 p-2 rounded-md"
-                        onClick={() => {
-                          setSelectedTransaction(transaction);
-                          setIsTransactionEditOpen(true);
-                        }}
-                      >
-                        <div>
-                          <div className="font-medium">{transaction.merchant}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {format(new Date(transaction.date), "d MMM yyyy")}
-                          </div>
-                        </div>
-                        <div className="font-medium">
-                          {formatCurrency(transaction.amount)}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <TransactionsList
+              groupedTransactions={groupedTransactions}
+              onTransactionClick={(transaction) => {
+                setSelectedTransaction(transaction);
+                setIsTransactionEditOpen(true);
+              }}
+            />
           </div>
         </SheetContent>
       </Sheet>
@@ -259,31 +207,13 @@ export const CategoryDetailsSheet = ({
         </Sheet>
       )}
 
-      <AlertDialog open={showBudgetDialog} onOpenChange={setShowBudgetDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Save Budget Amount</AlertDialogTitle>
-            <AlertDialogDescription>
-              Would you like to apply this budget amount to future months as well?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={() => updateCurrentMonthBudget.mutate()}
-              disabled={updateCurrentMonthBudget.isPending}
-            >
-              Current Month Only
-            </AlertDialogAction>
-            <AlertDialogAction 
-              onClick={() => updateFutureMonthsBudget.mutate()}
-              disabled={updateFutureMonthsBudget.isPending}
-            >
-              Apply to Future Months
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <BudgetDialog
+        isOpen={showBudgetDialog}
+        onClose={() => setShowBudgetDialog(false)}
+        onUpdateCurrentMonth={() => updateCurrentMonthBudget.mutate()}
+        onUpdateFutureMonths={() => updateFutureMonthsBudget.mutate()}
+        isLoading={updateCurrentMonthBudget.isPending || updateFutureMonthsBudget.isPending}
+      />
     </>
   );
 };
