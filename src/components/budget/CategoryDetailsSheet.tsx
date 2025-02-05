@@ -103,6 +103,7 @@ export const CategoryDetailsSheet = ({
       queryClient.invalidateQueries({ queryKey: ["budget-categories"] });
       toast.success("Budget updated for current month");
       setShowBudgetDialog(false);
+      onClose();
     },
     onError: (error) => {
       console.error("Error updating budget:", error);
@@ -138,6 +139,7 @@ export const CategoryDetailsSheet = ({
       queryClient.invalidateQueries({ queryKey: ["budget-categories"] });
       toast.success("Budget updated for current and future months");
       setShowBudgetDialog(false);
+      onClose();
     },
     onError: (error) => {
       console.error("Error updating budget:", error);
