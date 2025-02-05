@@ -47,7 +47,6 @@ export const CategoryDetailsSheet = ({
   const [showBudgetDialog, setShowBudgetDialog] = useState(false);
   const queryClient = useQueryClient();
 
-  // Fetch historical data for the chart
   const { data: chartData } = useQuery({
     queryKey: ["category-history", category.id, averageMonths],
     queryFn: async () => {
@@ -78,7 +77,6 @@ export const CategoryDetailsSheet = ({
     }
   });
 
-  // Fetch transactions for the list
   const { data: transactions } = useQuery({
     queryKey: ["category-transactions", category.id, selectedMonth],
     queryFn: async () => {
@@ -117,6 +115,12 @@ export const CategoryDetailsSheet = ({
       queryClient.invalidateQueries({ queryKey: ["budget-categories"] });
       toast.success("Budget updated for current month");
       setShowBudgetDialog(false);
+      setBudgetedAmount(budgetedAmount); // Update local state
+    },
+    onError: (error) => {
+      console.error("Error updating budget:", error);
+      toast.error("Failed to update budget");
+      setShowBudgetDialog(false);
     }
   });
 
@@ -150,10 +154,15 @@ export const CategoryDetailsSheet = ({
       queryClient.invalidateQueries({ queryKey: ["budget-categories"] });
       toast.success("Budget updated for current and future months");
       setShowBudgetDialog(false);
+      setBudgetedAmount(budgetedAmount); // Update local state
+    },
+    onError: (error) => {
+      console.error("Error updating budget:", error);
+      toast.error("Failed to update budget");
+      setShowBudgetDialog(false);
     }
   });
 
-  // Group transactions by month
   const groupedTransactions = transactions?.reduce((groups: { [key: string]: Transaction[] }, transaction) => {
     const month = format(new Date(transaction.date), "MMMM yyyy");
     if (!groups[month]) {
@@ -164,6 +173,10 @@ export const CategoryDetailsSheet = ({
   }, {}) || {};
 
   const handleSaveBudget = () => {
+    if (isNaN(Number(budgetedAmount))) {
+      toast.error("Please enter a valid number");
+      return;
+    }
     setShowBudgetDialog(true);
   };
 
@@ -176,7 +189,6 @@ export const CategoryDetailsSheet = ({
           </SheetHeader>
 
           <div className="space-y-6 py-6">
-            {/* Chart */}
             <div className="h-[200px] w-full">
               <BarChart width={350} height={200} data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -200,7 +212,6 @@ export const CategoryDetailsSheet = ({
               </div>
             </div>
 
-            {/* Transactions List */}
             <div className="space-y-4">
               {Object.entries(groupedTransactions).map(([month, monthTransactions]) => (
                 <div key={month}>
