@@ -94,7 +94,6 @@ export const CategoryDetailsSheet = ({
     }
   });
 
-  // Update budgeted amount mutation for current month
   const updateCurrentMonthBudget = useMutation({
     mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -115,7 +114,6 @@ export const CategoryDetailsSheet = ({
       queryClient.invalidateQueries({ queryKey: ["budget-categories"] });
       toast.success("Budget updated for current month");
       setShowBudgetDialog(false);
-      setBudgetedAmount(budgetedAmount); // Update local state
     },
     onError: (error) => {
       console.error("Error updating budget:", error);
@@ -124,13 +122,11 @@ export const CategoryDetailsSheet = ({
     }
   });
 
-  // Update budgeted amount mutation for future months
   const updateFutureMonthsBudget = useMutation({
     mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Update budget_categories table for future reference
       const { error: categoryError } = await supabase
         .from("budget_categories")
         .update({ budgeted_amount: Number(budgetedAmount) })
@@ -138,7 +134,6 @@ export const CategoryDetailsSheet = ({
 
       if (categoryError) throw categoryError;
 
-      // Update current month's budget
       const { error: currentMonthError } = await supabase
         .from("monthly_budgets")
         .upsert({
@@ -154,7 +149,6 @@ export const CategoryDetailsSheet = ({
       queryClient.invalidateQueries({ queryKey: ["budget-categories"] });
       toast.success("Budget updated for current and future months");
       setShowBudgetDialog(false);
-      setBudgetedAmount(budgetedAmount); // Update local state
     },
     onError: (error) => {
       console.error("Error updating budget:", error);
@@ -173,7 +167,8 @@ export const CategoryDetailsSheet = ({
   }, {}) || {};
 
   const handleSaveBudget = () => {
-    if (isNaN(Number(budgetedAmount))) {
+    const amount = Number(budgetedAmount);
+    if (isNaN(amount)) {
       toast.error("Please enter a valid number");
       return;
     }
@@ -199,7 +194,6 @@ export const CategoryDetailsSheet = ({
               </BarChart>
             </div>
 
-            {/* Budget Input */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Budgeted Amount</label>
               <div className="flex gap-2">
@@ -208,7 +202,12 @@ export const CategoryDetailsSheet = ({
                   value={budgetedAmount}
                   onChange={(e) => setBudgetedAmount(e.target.value)}
                 />
-                <Button onClick={handleSaveBudget}>Save</Button>
+                <Button 
+                  onClick={handleSaveBudget}
+                  disabled={updateCurrentMonthBudget.isPending || updateFutureMonthsBudget.isPending}
+                >
+                  Save
+                </Button>
               </div>
             </div>
 
@@ -270,10 +269,16 @@ export const CategoryDetailsSheet = ({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => updateCurrentMonthBudget.mutate()}>
+            <AlertDialogAction 
+              onClick={() => updateCurrentMonthBudget.mutate()}
+              disabled={updateCurrentMonthBudget.isPending}
+            >
               Current Month Only
             </AlertDialogAction>
-            <AlertDialogAction onClick={() => updateFutureMonthsBudget.mutate()}>
+            <AlertDialogAction 
+              onClick={() => updateFutureMonthsBudget.mutate()}
+              disabled={updateFutureMonthsBudget.isPending}
+            >
               Apply to Future Months
             </AlertDialogAction>
           </AlertDialogFooter>
