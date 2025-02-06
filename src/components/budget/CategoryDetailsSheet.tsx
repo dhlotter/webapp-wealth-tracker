@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -35,11 +35,6 @@ export const CategoryDetailsSheet = ({
   const [isTransactionEditOpen, setIsTransactionEditOpen] = useState(false);
   const [showBudgetDialog, setShowBudgetDialog] = useState(false);
   const queryClient = useQueryClient();
-
-  // Reset budgeted amount when category changes
-  useEffect(() => {
-    setBudgetedAmount(category.budgeted_amount.toString());
-  }, [category.id, category.budgeted_amount]);
 
   const { data: chartData } = useQuery({
     queryKey: ["category-history", category.id, averageMonths],
