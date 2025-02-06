@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -110,13 +110,10 @@ export const CategoryDetailsSheet = ({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["budget-categories"] });
       toast.success("Budget updated for current month");
-      setShowBudgetDialog(false);
-      onClose();
     },
     onError: (error) => {
       console.error("Error updating budget:", error);
       toast.error("Failed to update budget");
-      setShowBudgetDialog(false);
     }
   });
 
@@ -149,13 +146,10 @@ export const CategoryDetailsSheet = ({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["budget-categories"] });
       toast.success("Budget updated for current and future months");
-      setShowBudgetDialog(false);
-      onClose();
     },
     onError: (error) => {
       console.error("Error updating budget:", error);
       toast.error("Failed to update budget");
-      setShowBudgetDialog(false);
     }
   });
 
@@ -223,8 +217,16 @@ export const CategoryDetailsSheet = ({
       <BudgetDialog
         isOpen={showBudgetDialog}
         onClose={() => setShowBudgetDialog(false)}
-        onUpdateCurrentMonth={() => updateCurrentMonthBudget.mutate()}
-        onUpdateFutureMonths={() => updateFutureMonthsBudget.mutate()}
+        onUpdateCurrentMonth={async () => {
+          await updateCurrentMonthBudget.mutateAsync();
+          setShowBudgetDialog(false);
+          onClose();
+        }}
+        onUpdateFutureMonths={async () => {
+          await updateFutureMonthsBudget.mutateAsync();
+          setShowBudgetDialog(false);
+          onClose();
+        }}
         isLoading={updateCurrentMonthBudget.isPending || updateFutureMonthsBudget.isPending}
       />
     </>

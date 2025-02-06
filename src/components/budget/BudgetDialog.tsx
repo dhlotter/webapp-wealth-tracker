@@ -12,8 +12,8 @@ import {
 interface BudgetDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onUpdateCurrentMonth: () => void;
-  onUpdateFutureMonths: () => void;
+  onUpdateCurrentMonth: () => Promise<void>;
+  onUpdateFutureMonths: () => Promise<void>;
   isLoading: boolean;
 }
 
@@ -36,13 +36,19 @@ export const BudgetDialog = ({
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
           <AlertDialogAction 
-            onClick={onUpdateCurrentMonth}
+            onClick={async () => {
+              await onUpdateCurrentMonth();
+              onClose();
+            }}
             disabled={isLoading}
           >
             Current Month Only
           </AlertDialogAction>
           <AlertDialogAction 
-            onClick={onUpdateFutureMonths}
+            onClick={async () => {
+              await onUpdateFutureMonths();
+              onClose();
+            }}
             disabled={isLoading}
           >
             Apply to Future Months
