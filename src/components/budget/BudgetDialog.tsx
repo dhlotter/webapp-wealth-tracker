@@ -34,7 +34,7 @@ export const BudgetDialog = ({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
           <AlertDialogAction 
             onClick={onUpdateCurrentMonth}
             disabled={isLoading}

@@ -128,7 +128,6 @@ export const CategoryDetailsSheet = ({
       const amount = Number(budgetedAmount);
       if (isNaN(amount)) throw new Error("Invalid amount");
 
-      // Update the budget category
       const { error: categoryError } = await supabase
         .from("budget_categories")
         .update({ budgeted_amount: amount })
@@ -136,7 +135,6 @@ export const CategoryDetailsSheet = ({
 
       if (categoryError) throw categoryError;
 
-      // Also update the current month's budget
       const { error: currentMonthError } = await supabase
         .from("monthly_budgets")
         .upsert({
