@@ -65,8 +65,8 @@ export const TransactionsTable = ({
             <TableCell>
               {format(new Date(transaction.date), settings?.date_format || "MMM d, yyyy")}
             </TableCell>
-            <TableCell>{transaction.accounts?.name || "(deleted account)"}</TableCell>
-            <TableCell>{transaction.merchant}</TableCell>
+            <TableCell>{transaction.accounts?.name}</TableCell>
+            <TableCell>{transaction.merchant || "(deleted account)"}</TableCell>
             <TableCell>{`${transaction.spending_group} - ${transaction.category}`}</TableCell>
             <TableCell className="text-right">
               {formatCurrency(transaction.amount, transaction.accounts?.currency)}

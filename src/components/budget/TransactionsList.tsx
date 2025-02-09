@@ -27,9 +27,9 @@ export const TransactionsList = ({
                 onClick={() => onTransactionClick(transaction)}
               >
                 <div>
-                  <div className="font-medium">{transaction.merchant}</div>
+                  <div className="font-medium">{transaction.merchant || "(deleted account)"}</div>
                   <div className="text-sm text-muted-foreground">
-                    {format(new Date(transaction.date), "d MMM yyyy")} • {transaction.accounts?.name || "(deleted account)"}
+                    {format(new Date(transaction.date), "d MMM yyyy")} • {transaction.accounts?.name}
                   </div>
                 </div>
                 <div className="font-medium">
