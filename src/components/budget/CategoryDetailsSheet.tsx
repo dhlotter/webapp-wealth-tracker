@@ -41,6 +41,20 @@ export const CategoryDetailsSheet = ({
     setBudgetedAmount(category.budgeted_amount.toString());
   }, [category.budgeted_amount]);
 
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        console.error("Invalid date:", dateString);
+        return "Invalid date";
+      }
+      return format(date, "MMM yy");
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "Invalid date";
+    }
+  };
+
   const { data: chartData } = useQuery({
     queryKey: ["category-history", category.id, averageMonths],
     queryFn: async () => {
@@ -56,13 +70,19 @@ export const CategoryDetailsSheet = ({
 
       const monthlyTotals = Array.from({ length: averageMonths }, (_, i) => {
         const month = subMonths(selectedMonth, i);
-        const monthTransactions = transactions?.filter(tx => 
-          new Date(tx.date).getMonth() === month.getMonth() &&
-          new Date(tx.date).getFullYear() === month.getFullYear()
-        ) || [];
+        const monthTransactions = transactions?.filter(tx => {
+          try {
+            const txDate = new Date(tx.date);
+            return txDate.getMonth() === month.getMonth() &&
+                   txDate.getFullYear() === month.getFullYear();
+          } catch (error) {
+            console.error("Error parsing date:", error);
+            return false;
+          }
+        }) || [];
         
         return {
-          month: format(month, "MMM yy"),
+          month: formatDate(month.toISOString()),
           total: monthTransactions.reduce((sum, tx) => sum + tx.amount, 0)
         };
       }).reverse();
@@ -87,6 +107,24 @@ export const CategoryDetailsSheet = ({
       return data as Transaction[];
     }
   });
+
+  const groupedTransactions = transactions?.reduce((groups: { [key: string]: Transaction[] }, transaction) => {
+    try {
+      const date = new Date(transaction.date);
+      if (isNaN(date.getTime())) {
+        console.error("Invalid date:", transaction.date);
+        return groups;
+      }
+      const month = format(date, "MMMM yyyy");
+      if (!groups[month]) {
+        groups[month] = [];
+      }
+      groups[month].push(transaction);
+    } catch (error) {
+      console.error("Error grouping transaction:", error);
+    }
+    return groups;
+  }, {}) || {};
 
   const updateCurrentMonthBudget = useMutation({
     mutationFn: async () => {
@@ -152,15 +190,6 @@ export const CategoryDetailsSheet = ({
       toast.error("Failed to update budget");
     }
   });
-
-  const groupedTransactions = transactions?.reduce((groups: { [key: string]: Transaction[] }, transaction) => {
-    const month = format(new Date(transaction.date), "MMMM yyyy");
-    if (!groups[month]) {
-      groups[month] = [];
-    }
-    groups[month].push(transaction);
-    return groups;
-  }, {}) || {};
 
   const handleSaveBudget = () => {
     const amount = Number(budgetedAmount);
