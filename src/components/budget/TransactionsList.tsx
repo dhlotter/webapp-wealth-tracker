@@ -1,3 +1,4 @@
+
 import { format } from "date-fns";
 import { Transaction } from "@/types/transactions";
 import { formatCurrency } from "@/lib/utils/formatCurrency";
@@ -28,7 +29,7 @@ export const TransactionsList = ({
                 <div>
                   <div className="font-medium">{transaction.merchant}</div>
                   <div className="text-sm text-muted-foreground">
-                    {format(new Date(transaction.date), "d MMM yyyy")}
+                    {format(new Date(transaction.date), "d MMM yyyy")} • {transaction.accounts?.name || "(deleted account)"}
                   </div>
                 </div>
                 <div className="font-medium">

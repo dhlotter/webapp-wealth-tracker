@@ -1,3 +1,4 @@
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Transaction } from "@/types/transactions";
 import { formatCurrency } from "@/lib/utils/formatCurrency";
@@ -64,7 +65,7 @@ export const TransactionsTable = ({
             <TableCell>
               {format(new Date(transaction.date), settings?.date_format || "MMM d, yyyy")}
             </TableCell>
-            <TableCell>{transaction.accounts?.name}</TableCell>
+            <TableCell>{transaction.accounts?.name || "(deleted account)"}</TableCell>
             <TableCell>{transaction.merchant}</TableCell>
             <TableCell>{`${transaction.spending_group} - ${transaction.category}`}</TableCell>
             <TableCell className="text-right">
