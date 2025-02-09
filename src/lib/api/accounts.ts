@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Account } from "@/types/accounts";
 
@@ -95,4 +96,26 @@ export async function updateAccount(id: string, account: Partial<Account>) {
     });
 
   return data;
+}
+
+export async function deleteAccount(id: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("User not authenticated");
+
+  // Delete account history first (due to foreign key constraint)
+  const { error: historyError } = await supabase
+    .from("account_history")
+    .delete()
+    .eq('account_id', id);
+
+  if (historyError) throw historyError;
+
+  // Then delete the account
+  const { error } = await supabase
+    .from("accounts")
+    .delete()
+    .eq('id', id)
+    .eq('user_id', user.id);
+
+  if (error) throw error;
 }

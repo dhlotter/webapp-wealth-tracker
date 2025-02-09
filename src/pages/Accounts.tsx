@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,14 +14,25 @@ import { PlusCircle } from "lucide-react";
 import { AccountsTable } from "@/components/accounts/AccountsTable";
 import { AccountForm } from "@/components/accounts/AccountForm";
 import { Account } from "@/types/accounts";
-import { fetchAccounts, createAccount, updateAccount } from "@/lib/api/accounts";
+import { fetchAccounts, createAccount, updateAccount, deleteAccount } from "@/lib/api/accounts";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const Accounts = () => {
   const queryClient = useQueryClient();
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const { data: accounts = [], isLoading, error } = useQuery({
     queryKey: ["accounts"],
@@ -54,6 +66,20 @@ const Accounts = () => {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteAccount(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      setIsEditSheetOpen(false);
+      setIsDeleteDialogOpen(false);
+      toast.success("Account deleted successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to delete account");
+      console.error("Error deleting account:", error);
+    },
+  });
+
   const handleAddAccount = (newAccount: Partial<Account>) => {
     createMutation.mutate(newAccount);
   };
@@ -64,6 +90,12 @@ const Accounts = () => {
         id: selectedAccount.id,
         account: updatedAccount,
       });
+    }
+  };
+
+  const handleDeleteAccount = () => {
+    if (selectedAccount) {
+      deleteMutation.mutate(selectedAccount.id);
     }
   };
 
@@ -126,10 +158,32 @@ const Accounts = () => {
               account={selectedAccount}
               onSubmit={handleEditAccount}
               onCancel={() => setIsEditSheetOpen(false)}
+              onDelete={() => setIsDeleteDialogOpen(true)}
             />
           )}
         </SheetContent>
       </Sheet>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the account
+              and all its history.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAccount}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

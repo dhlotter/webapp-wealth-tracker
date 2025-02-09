@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,11 +21,13 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { Trash2 } from "lucide-react";
 
 interface AccountFormProps {
   account?: Account;
   onSubmit: (data: Partial<Account>) => void;
   onCancel: () => void;
+  onDelete?: () => void;
 }
 
 const accountTypes = [
@@ -43,7 +46,7 @@ const currencies = [
   { value: "ZAR", label: "South African Rand (R)" },
 ];
 
-export function AccountForm({ account, onSubmit, onCancel }: AccountFormProps) {
+export function AccountForm({ account, onSubmit, onCancel, onDelete }: AccountFormProps) {
   const [formData, setFormData] = useState<Partial<Account>>(
     account || { type: accountTypes[0], currency: "USD" }
   );
@@ -140,13 +143,25 @@ export function AccountForm({ account, onSubmit, onCancel }: AccountFormProps) {
           )}
         </div>
       </ScrollArea>
-      <div className="mt-auto border-t p-[2mm] flex justify-end gap-2">
-        <Button variant="outline" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button onClick={() => onSubmit(formData)}>
-          {account ? "Save Changes" : "Add Account"}
-        </Button>
+      <div className="mt-auto border-t p-[2mm] flex justify-between gap-2">
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button onClick={() => onSubmit(formData)}>
+            {account ? "Save Changes" : "Add Account"}
+          </Button>
+        </div>
+        {account && onDelete && (
+          <Button
+            variant="destructive"
+            size="icon"
+            onClick={onDelete}
+            title="Delete Account"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
       </div>
     </div>
   );
