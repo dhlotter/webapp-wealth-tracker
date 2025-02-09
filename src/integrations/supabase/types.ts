@@ -43,6 +43,7 @@ export type Database = {
           balance: number
           created_at: string
           currency: string
+          deleted_at: string | null
           id: string
           name: string
           type: string
@@ -53,6 +54,7 @@ export type Database = {
           balance?: number
           created_at?: string
           currency?: string
+          deleted_at?: string | null
           id?: string
           name: string
           type: string
@@ -63,6 +65,7 @@ export type Database = {
           balance?: number
           created_at?: string
           currency?: string
+          deleted_at?: string | null
           id?: string
           name?: string
           type?: string
@@ -327,7 +330,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      handle_account_deletion: {
+        Args: {
+          account_id_param: string
+          delete_transactions: boolean
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

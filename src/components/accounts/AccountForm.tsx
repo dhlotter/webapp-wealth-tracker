@@ -21,13 +21,16 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { Trash2 } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface AccountFormProps {
   account?: Account;
   onSubmit: (data: Partial<Account>) => void;
   onCancel: () => void;
-  onDelete?: () => void;
+  onDelete?: (deleteTransactions: boolean) => void;
+  transactionCount?: number;
 }
 
 const accountTypes = [
@@ -46,10 +49,18 @@ const currencies = [
   { value: "ZAR", label: "South African Rand (R)" },
 ];
 
-export function AccountForm({ account, onSubmit, onCancel, onDelete }: AccountFormProps) {
+export function AccountForm({ 
+  account, 
+  onSubmit, 
+  onCancel, 
+  onDelete,
+  transactionCount = 0
+}: AccountFormProps) {
   const [formData, setFormData] = useState<Partial<Account>>(
     account || { type: accountTypes[0], currency: "USD" }
   );
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteOption, setDeleteOption] = useState<'keep' | 'delete'>('keep');
 
   return (
     <div className="flex flex-col h-full">
@@ -156,13 +167,52 @@ export function AccountForm({ account, onSubmit, onCancel, onDelete }: AccountFo
           <Button
             variant="destructive"
             size="icon"
-            onClick={onDelete}
+            onClick={() => setShowDeleteDialog(true)}
             title="Delete Account"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
         )}
       </div>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this account?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {transactionCount > 0 ? (
+                <>
+                  <p className="mb-4">This account has {transactionCount} transaction{transactionCount === 1 ? '' : 's'}. What would you like to do with them?</p>
+                  <RadioGroup value={deleteOption} onValueChange={(value: 'keep' | 'delete') => setDeleteOption(value)}>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="keep" id="keep" />
+                      <Label htmlFor="keep">Keep transactions (account name will be marked as deleted)</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="delete" id="delete" />
+                      <Label htmlFor="delete">Delete all transactions associated with this account</Label>
+                    </div>
+                  </RadioGroup>
+                </>
+              ) : (
+                "This action cannot be undone."
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                onDelete(deleteOption === 'delete');
+                setShowDeleteDialog(false);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

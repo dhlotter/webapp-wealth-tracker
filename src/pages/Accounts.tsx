@@ -14,25 +14,15 @@ import { PlusCircle } from "lucide-react";
 import { AccountsTable } from "@/components/accounts/AccountsTable";
 import { AccountForm } from "@/components/accounts/AccountForm";
 import { Account } from "@/types/accounts";
-import { fetchAccounts, createAccount, updateAccount, deleteAccount } from "@/lib/api/accounts";
+import { fetchAccounts, createAccount, updateAccount, deleteAccount, checkAccountTransactions } from "@/lib/api/accounts";
 import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 const Accounts = () => {
   const queryClient = useQueryClient();
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [transactionCount, setTransactionCount] = useState(0);
 
   const { data: accounts = [], isLoading, error } = useQuery({
     queryKey: ["accounts"],
@@ -67,11 +57,12 @@ const Accounts = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => deleteAccount(id),
+    mutationFn: ({ id, deleteTransactions }: { id: string; deleteTransactions: boolean }) =>
+      deleteAccount(id, deleteTransactions),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
       setIsEditSheetOpen(false);
-      setIsDeleteDialogOpen(false);
       toast.success("Account deleted successfully");
     },
     onError: (error: Error) => {
@@ -93,9 +84,26 @@ const Accounts = () => {
     }
   };
 
-  const handleDeleteAccount = () => {
+  const handleDeleteAccount = (deleteTransactions: boolean) => {
     if (selectedAccount) {
-      deleteMutation.mutate(selectedAccount.id);
+      deleteMutation.mutate({
+        id: selectedAccount.id,
+        deleteTransactions
+      });
+    }
+  };
+
+  const handleAccountClick = async (account: Account) => {
+    setSelectedAccount(account);
+    // Check for transactions
+    try {
+      const count = await checkAccountTransactions(account.id);
+      setTransactionCount(count);
+      setIsEditSheetOpen(true);
+    } catch (error) {
+      console.error("Error checking transactions:", error);
+      setTransactionCount(0);
+      setIsEditSheetOpen(true);
     }
   };
 
@@ -139,10 +147,7 @@ const Accounts = () => {
 
       <AccountsTable
         accounts={accounts}
-        onAccountClick={(account) => {
-          setSelectedAccount(account);
-          setIsEditSheetOpen(true);
-        }}
+        onAccountClick={handleAccountClick}
       />
 
       <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
@@ -158,32 +163,12 @@ const Accounts = () => {
               account={selectedAccount}
               onSubmit={handleEditAccount}
               onCancel={() => setIsEditSheetOpen(false)}
-              onDelete={() => setIsDeleteDialogOpen(true)}
+              onDelete={handleDeleteAccount}
+              transactionCount={transactionCount}
             />
           )}
         </SheetContent>
       </Sheet>
-
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the account
-              and all its history.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteAccount}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };

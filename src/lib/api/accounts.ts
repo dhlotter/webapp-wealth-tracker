@@ -21,6 +21,7 @@ export async function fetchAccounts() {
       )
     `)
     .eq('user_id', user.id)
+    .is('deleted_at', null)
     .order('name');
 
   if (error) throw error;
@@ -82,6 +83,7 @@ export async function updateAccount(id: string, account: Partial<Account>) {
     })
     .eq('id', id)
     .eq('user_id', user.id)
+    .is('deleted_at', null)
     .select()
     .single();
 
@@ -98,24 +100,30 @@ export async function updateAccount(id: string, account: Partial<Account>) {
   return data;
 }
 
-export async function deleteAccount(id: string) {
+export async function deleteAccount(id: string, deleteTransactions: boolean) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("User not authenticated");
 
-  // Delete account history first (due to foreign key constraint)
-  const { error: historyError } = await supabase
-    .from("account_history")
-    .delete()
-    .eq('account_id', id);
-
-  if (historyError) throw historyError;
-
-  // Then delete the account
   const { error } = await supabase
-    .from("accounts")
-    .delete()
-    .eq('id', id)
-    .eq('user_id', user.id);
+    .rpc('handle_account_deletion', {
+      account_id_param: id,
+      delete_transactions: deleteTransactions
+    });
 
   if (error) throw error;
+}
+
+// New function to check if account has transactions
+export async function checkAccountTransactions(id: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("User not authenticated");
+
+  const { count, error } = await supabase
+    .from("transactions")
+    .select('*', { count: 'exact', head: true })
+    .eq('account_id', id);
+
+  if (error) throw error;
+  
+  return count || 0;
 }
