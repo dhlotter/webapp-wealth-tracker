@@ -13,6 +13,20 @@ export const TransactionsList = ({
   groupedTransactions, 
   onTransactionClick 
 }: TransactionsListProps) => {
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        console.error("Invalid date:", dateString);
+        return "Invalid date";
+      }
+      return format(date, "d MMM yyyy");
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "Invalid date";
+    }
+  };
+
   return (
     <div className="space-y-4">
       {Object.entries(groupedTransactions).map(([month, monthTransactions]) => (
@@ -29,7 +43,7 @@ export const TransactionsList = ({
                 <div>
                   <div className="font-medium">{transaction.merchant || "(deleted account)"}</div>
                   <div className="text-sm text-muted-foreground">
-                    {format(new Date(transaction.date), "d MMM yyyy")} • {transaction.accounts?.name}
+                    {formatDate(transaction.date)} • {transaction.accounts?.name}
                   </div>
                 </div>
                 <div className="font-medium">
